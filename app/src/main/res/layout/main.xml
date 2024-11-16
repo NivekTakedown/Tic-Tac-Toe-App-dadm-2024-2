@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:gravity="center_horizontal">
 
+    <!-- Diseño principal -->
     <TableLayout
         android:id="@+id/play_grid"
         android:layout_width="match_parent"
@@ -74,6 +75,26 @@
                 android:textSize="70dp" />
         </TableRow>
     </TableLayout>
+    <TextView
+        android:id="@+id/human_score"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Human: 0"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/tie_score"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Ties: 0"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/computer_score"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Computer: 0"
+        android:textSize="18sp" />
 
     <TextView
         android:id="@+id/information"
@@ -83,4 +104,12 @@
         android:gravity="center_horizontal"
         android:layout_marginTop="20dp"
         android:textSize="20dp" />
+
+    <!-- Botón para iniciar un nuevo juego -->
+    <Button
+        android:id="@+id/new_game_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nuevo Juego"
+        android:layout_marginTop="20dp" />
 </LinearLayout>

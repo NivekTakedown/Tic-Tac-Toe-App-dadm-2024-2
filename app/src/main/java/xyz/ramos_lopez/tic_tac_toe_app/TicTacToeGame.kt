@@ -5,6 +5,7 @@ import kotlin.random.Random
 class TicTacToeGame {
     private var mBoard = CharArray(BOARD_SIZE) { (it + 1).toString()[0] }
     private val mRand = Random
+    private var gameOver = false // Nueva variable para verificar si el juego terminó
 
     companion object {
         const val BOARD_SIZE = 9
@@ -18,6 +19,7 @@ class TicTacToeGame {
         for (i in 0 until BOARD_SIZE) {
             mBoard[i] = OPEN_SPOT
         }
+        gameOver = false // Reinicia el estado del juego cuando se limpia el tablero
     }
 
     /**
@@ -25,8 +27,15 @@ class TicTacToeGame {
      * The location must be available, or the board will not be changed.
      */
     fun setMove(player: Char, location: Int) {
+        if (gameOver) return // Si el juego ha terminado, no se pueden hacer más movimientos
+
         if (location in 0 until BOARD_SIZE && mBoard[location] == OPEN_SPOT) {
             mBoard[location] = player
+        }
+
+        // Comprobar si el juego terminó después del movimiento
+        if (checkForWinner() != 0) {
+            gameOver = true
         }
     }
 
@@ -36,6 +45,8 @@ class TicTacToeGame {
      * @return The best move for the computer to make (0-8).
      */
     fun getComputerMove(): Int {
+        if (gameOver) return -1 // Si el juego ha terminado, no se puede realizar el movimiento
+
         // First see if there's a move O can make to win
         for (i in 0 until BOARD_SIZE) {
             if (mBoard[i] == OPEN_SPOT) {

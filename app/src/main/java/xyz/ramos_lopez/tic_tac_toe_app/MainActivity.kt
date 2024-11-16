@@ -9,10 +9,14 @@ import androidx.activity.ComponentActivity
 
 class MainActivity : ComponentActivity() {
     private lateinit var game: TicTacToeGame
-    // Botones que forman el tablero
     private lateinit var boardButtons: Array<Button>
-    // Texto informativo
     private lateinit var infoTextView: TextView
+    private lateinit var newGameButton: Button
+
+    // Variables para el marcador
+    private var humanScore = 0
+    private var tieScore = 0
+    private var computerScore = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,13 +34,21 @@ class MainActivity : ComponentActivity() {
                     6 -> R.id.seven
                     7 -> R.id.eight
                     8 -> R.id.nine
-                    else -> throw IllegalStateException("Invalid button index")
+                    else -> throw IllegalStateException("Índice de botón no válido")
                 }
             )
         }
 
         infoTextView = findViewById(R.id.information)
+        newGameButton = findViewById(R.id.new_game_button)
+
+        // Configurar el botón de nuevo juego
+        newGameButton.setOnClickListener {
+            startNewGame()
+        }
+
         game = TicTacToeGame()
+
         startNewGame()
     }
 
@@ -49,30 +61,53 @@ class MainActivity : ComponentActivity() {
                 setOnClickListener(ButtonClickListener(i))
             }
         }
-        // El humano va primero
-        infoTextView.text = "You go first."
+        infoTextView.text = getString(R.string.first_human)
+        updateScoreboard()
     }
 
-    // Manejador de clicks en los botones del tablero
+    private fun updateScoreboard() {
+        // Actualiza el marcador en la pantalla
+        findViewById<TextView>(R.id.human_score).text = "Human: $humanScore"
+        findViewById<TextView>(R.id.tie_score).text = "Ties: $tieScore"
+        findViewById<TextView>(R.id.computer_score).text = "Computer: $computerScore"
+    }
+
     private inner class ButtonClickListener(private val location: Int) : View.OnClickListener {
         override fun onClick(view: View) {
             if (boardButtons[location].isEnabled) {
                 setMove(TicTacToeGame.HUMAN_PLAYER, location)
-                // Si no hay ganador aún, deja que la computadora haga su movimiento
                 var winner = game.checkForWinner()
                 if (winner == 0) {
-                    infoTextView.text = "It's Android's turn."
+                    infoTextView.text = getString(R.string.turn_computer)
                     val move = game.getComputerMove()
                     setMove(TicTacToeGame.COMPUTER_PLAYER, move)
                     winner = game.checkForWinner()
                 }
 
                 infoTextView.text = when (winner) {
-                    0 -> "It's your turn."
-                    1 -> "It's a tie!"
-                    2 -> "You won!"
-                    else -> "Android won!"
+                    0 -> getString(R.string.turn_human)
+                    1 -> {
+                        tieScore++  // Incrementar el marcador de empates
+                        getString(R.string.result_tie)
+                    }
+                    2 -> {
+                        humanScore++  // Incrementar el marcador de humanos
+                        getString(R.string.result_human_wins)
+                    }
+                    else -> {
+                        computerScore++  // Incrementar el marcador de la computadora
+                        getString(R.string.result_computer_wins)
+                    }
                 }
+
+                // Deshabilitar todos los botones solo cuando el juego haya terminado
+                if (winner != 0) {
+                    boardButtons.forEach { button ->
+                        button.isEnabled = false
+                    }
+                }
+
+                updateScoreboard()  // Actualizar el marcador
             }
         }
     }

@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Tic-Tac-Toe-App</string>
-</resources>
+    <string name="new_game">New Game</string>
+    <string name="first_human">Your turn!</string>
+    <string name="turn_computer">Computer\'s turn...</string>
+    <string name="turn_human">Your turn!</string>
+    <string name="result_tie">It\'s a tie!</string>
+    <string name="result_human_wins">You win!</string>
+    <string name="result_computer_wins">Computer wins!</string>
+    </resources>
