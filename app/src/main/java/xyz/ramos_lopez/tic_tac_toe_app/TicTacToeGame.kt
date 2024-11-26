@@ -3,10 +3,17 @@ package xyz.ramos_lopez.tic_tac_toe_app
 import kotlin.random.Random
 
 class TicTacToeGame {
+    enum class DifficultyLevel {
+        Easy, Harder, Expert
+    }
+    private var mDifficultyLevel = DifficultyLevel.Expert
     private var mBoard = CharArray(BOARD_SIZE) { (it + 1).toString()[0] }
     private val mRand = Random
     private var gameOver = false // Nueva variable para verificar si el juego terminó
 
+    fun setDifficultyLevel(difficultyLevel: DifficultyLevel) {
+        mDifficultyLevel = difficultyLevel
+    }
     companion object {
         const val BOARD_SIZE = 9
         const val HUMAN_PLAYER = 'X'
@@ -45,9 +52,29 @@ class TicTacToeGame {
      * @return The best move for the computer to make (0-8).
      */
     fun getComputerMove(): Int {
-        if (gameOver) return -1 // Si el juego ha terminado, no se puede realizar el movimiento
+        if (gameOver) return -1
 
-        // First see if there's a move O can make to win
+        return when (mDifficultyLevel) {
+            DifficultyLevel.Easy -> getRandomMove()
+            DifficultyLevel.Harder -> {
+                getWinningMove() ?: getRandomMove()
+            }
+            DifficultyLevel.Expert -> {
+                getWinningMove() ?: getBlockingMove() ?: getRandomMove()
+            }
+        }
+    }
+
+    private fun getRandomMove(): Int {
+        var move: Int
+        do {
+            move = mRand.nextInt(BOARD_SIZE)
+        } while (mBoard[move] == HUMAN_PLAYER || mBoard[move] == COMPUTER_PLAYER)
+        return move
+    }
+
+    private fun getWinningMove(): Int? {
+        // Buscar movimiento ganador
         for (i in 0 until BOARD_SIZE) {
             if (mBoard[i] == OPEN_SPOT) {
                 mBoard[i] = COMPUTER_PLAYER
@@ -58,28 +85,23 @@ class TicTacToeGame {
                 mBoard[i] = OPEN_SPOT
             }
         }
+        return null
+    }
 
-        // See if there's a move O can make to block X from winning
+    private fun getBlockingMove(): Int? {
+        // Buscar movimiento para bloquear al jugador
         for (i in 0 until BOARD_SIZE) {
             if (mBoard[i] == OPEN_SPOT) {
                 mBoard[i] = HUMAN_PLAYER
                 if (checkForWinner() == 2) {
-                    mBoard[i] = COMPUTER_PLAYER
+                    mBoard[i] = OPEN_SPOT
                     return i
                 }
                 mBoard[i] = OPEN_SPOT
             }
         }
-
-        // Generate random move
-        var move: Int
-        do {
-            move = mRand.nextInt(BOARD_SIZE)
-        } while (mBoard[move] == HUMAN_PLAYER || mBoard[move] == COMPUTER_PLAYER)
-
-        return move
+        return null
     }
-
     /**
      * Check for a winner and return a status value indicating who has won.
      * @return Return 0 if no winner or tie yet, 1 if it's a tie, 2 if X won,
