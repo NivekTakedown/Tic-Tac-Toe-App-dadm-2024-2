@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.app.Dialog
 import android.graphics.Color
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -17,7 +18,9 @@ class MainActivity : Activity() {
     companion object {
         private const val DIALOG_DIFFICULTY_ID = 0
         private const val DIALOG_QUIT_ID = 1
+        private const val DIALOG_ABOUT_ID = 2  // Añade esta constante
     }
+
     private lateinit var game: TicTacToeGame
     private lateinit var boardButtons: Array<Button>
     private lateinit var infoTextView: TextView
@@ -92,6 +95,10 @@ class MainActivity : Activity() {
                 showDialog(DIALOG_QUIT_ID)
                 return true
             }
+            R.id.about -> {
+                showDialog(DIALOG_ABOUT_ID)
+                return true
+            }
         }
         return false
     }
@@ -143,6 +150,14 @@ class MainActivity : Activity() {
                         this@MainActivity.finish()
                     }
                     .setNegativeButton(R.string.no, null)
+                builder.create()
+            }
+
+            DIALOG_ABOUT_ID -> {
+                val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
+                val layout = inflater.inflate(R.layout.about_dialog, null)
+                builder.setView(layout)
+                    .setPositiveButton(R.string.ok, null)
                 builder.create()
             }
 

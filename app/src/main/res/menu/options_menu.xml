@@ -17,4 +17,9 @@
         android:title="@string/menu_quit"
         android:icon="@drawable/quit_game"
         android:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/about"
+        android:title="@string/about"
+        android:icon="@drawable/about_icon"
+        android:showAsAction="never" />
 </menu>

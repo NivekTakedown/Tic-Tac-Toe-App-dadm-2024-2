@@ -16,6 +16,13 @@
     <string name="difficulty_harder">Harder</string>
     <string name="difficulty_expert">Expert</string>
 
+    <!-- About Dialog -->
+    <string name="about">About</string>
+    <string name="app_icon_description">App Icon</string>
+    <string name="about_text">A simple Tic-Tac-Toe game\nDeveloped by Kevin Fabio Ramos López</string>
+    <string name="programmer_info">© 2024 All rights reserved</string>
+    <string name="ok">OK</string>
+
     <!-- Quit Dialog -->
     <string name="quit_question">Are you sure you want to quit?</string>
     <string name="yes">Yes</string>
