@@ -1,6 +1,8 @@
 package xyz.ramos_lopez.tic_tac_toe_app
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.app.Dialog
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Menu
@@ -8,9 +10,14 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 
 class MainActivity : Activity() {
+    companion object {
+        private const val DIALOG_DIFFICULTY_ID = 0
+        private const val DIALOG_QUIT_ID = 1
+    }
     private lateinit var game: TicTacToeGame
     private lateinit var boardButtons: Array<Button>
     private lateinit var infoTextView: TextView
@@ -68,16 +75,78 @@ class MainActivity : Activity() {
         findViewById<TextView>(R.id.computer_score).text = "Computer: $computerScore"
     }
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.main_menu, menu)
+        menuInflater.inflate(R.menu.options_menu, menu)
         return true
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.menu_new_game -> {
+        when (item.itemId) {
+            R.id.new_game -> {
                 startNewGame()
-                true
+                return true
             }
-            else -> super.onOptionsItemSelected(item)
+            R.id.ai_difficulty -> {
+                showDialog(DIALOG_DIFFICULTY_ID)
+                return true
+            }
+            R.id.quit -> {
+                showDialog(DIALOG_QUIT_ID)
+                return true
+            }
+        }
+        return false
+    }
+    override fun onCreateDialog(id: Int): Dialog {
+        val builder = AlertDialog.Builder(this)
+
+        return when (id) {
+            DIALOG_DIFFICULTY_ID -> {
+                builder.setTitle(R.string.difficulty_choose)
+                val levels = arrayOf(
+                    getString(R.string.difficulty_easy),
+                    getString(R.string.difficulty_harder),
+                    getString(R.string.difficulty_expert)
+                )
+
+                // Obtener el nivel de dificultad actual
+                val selected = when (game.getDifficultyLevel()) {
+                    TicTacToeGame.DifficultyLevel.Easy -> 0
+                    TicTacToeGame.DifficultyLevel.Harder -> 1
+                    TicTacToeGame.DifficultyLevel.Expert -> 2
+                }
+
+                builder.setSingleChoiceItems(levels, selected) { dialog, item ->
+                    dialog.dismiss()
+
+                    // Establecer el nuevo nivel de dificultad
+                    game.setDifficultyLevel(
+                        when (item) {
+                            0 -> TicTacToeGame.DifficultyLevel.Easy
+                            1 -> TicTacToeGame.DifficultyLevel.Harder
+                            else -> TicTacToeGame.DifficultyLevel.Expert
+                        }
+                    )
+
+                    // Mostrar el nivel seleccionado
+                    Toast.makeText(
+                        applicationContext,
+                        levels[item],
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                builder.create()
+            }
+
+            DIALOG_QUIT_ID -> {
+                builder.setMessage(R.string.quit_question)
+                    .setCancelable(false)
+                    .setPositiveButton(R.string.yes) { _, _ ->
+                        this@MainActivity.finish()
+                    }
+                    .setNegativeButton(R.string.no, null)
+                builder.create()
+            }
+
+            else -> super.onCreateDialog(id)
         }
     }
     private inner class ButtonClickListener(private val location: Int) : View.OnClickListener {

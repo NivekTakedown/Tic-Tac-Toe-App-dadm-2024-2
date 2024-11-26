@@ -3,14 +3,23 @@
     <string name="app_name">Tic-Tac-Toe-App</string>
 
     <!-- Menu items -->
+    <string name="new_game">New Game</string>
     <string name="menu_new_game">New Game</string>
     <string name="menu_difficulty">Difficulty</string>
     <string name="menu_quit">Quit</string>
 
-    <!-- Difficulty levels -->
+
+
+    <!-- Dialog Strings -->
+    <string name="difficulty_choose">Choose Difficulty</string>
     <string name="difficulty_easy">Easy</string>
     <string name="difficulty_harder">Harder</string>
     <string name="difficulty_expert">Expert</string>
+
+    <!-- Quit Dialog -->
+    <string name="quit_question">Are you sure you want to quit?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 
     <!-- Existing strings -->
     <string name="first_human">Your turn!</string>

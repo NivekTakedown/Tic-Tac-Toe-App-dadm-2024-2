@@ -6,11 +6,14 @@ class TicTacToeGame {
     enum class DifficultyLevel {
         Easy, Harder, Expert
     }
+
     private var mDifficultyLevel = DifficultyLevel.Expert
     private var mBoard = CharArray(BOARD_SIZE) { (it + 1).toString()[0] }
     private val mRand = Random
     private var gameOver = false // Nueva variable para verificar si el juego terminó
 
+
+    fun getDifficultyLevel(): DifficultyLevel = mDifficultyLevel
     fun setDifficultyLevel(difficultyLevel: DifficultyLevel) {
         mDifficultyLevel = difficultyLevel
     }
