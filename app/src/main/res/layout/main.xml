@@ -3,98 +3,50 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center_horizontal">
+    android:gravity="center_horizontal"
+    android:padding="16dp"
+    android:background="#f0f0f0">
 
-    <!-- Diseño principal -->
-    <TableLayout
-        android:id="@+id/play_grid"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp">
+    <!-- Reemplazamos el TableLayout por el BoardView personalizado -->
+    <xyz.ramos_lopez.tic_tac_toe_app.BoardView
+        android:id="@+id/board"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/board_background" />
 
-        <TableRow android:gravity="center_horizontal">
-            <Button
-                android:id="@+id/one"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:text="1"
-                android:textSize="70dp" />
-            <Button
-                android:id="@+id/two"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:text="2"
-                android:textSize="70dp" />
-            <Button
-                android:id="@+id/three"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:text="3"
-                android:textSize="70dp" />
-        </TableRow>
-
-        <TableRow android:gravity="center_horizontal">
-            <Button
-                android:id="@+id/four"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:text="4"
-                android:textSize="70dp" />
-            <Button
-                android:id="@+id/five"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:text="5"
-                android:textSize="70dp" />
-            <Button
-                android:id="@+id/six"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:text="6"
-                android:textSize="70dp" />
-        </TableRow>
-
-        <TableRow android:gravity="center_horizontal">
-            <Button
-                android:id="@+id/seven"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:text="7"
-                android:textSize="70dp" />
-            <Button
-                android:id="@+id/eight"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:text="8"
-                android:textSize="70dp" />
-            <Button
-                android:id="@+id/nine"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:text="9"
-                android:textSize="70dp" />
-        </TableRow>
-    </TableLayout>
     <TextView
         android:id="@+id/human_score"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Human: 0"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:textColor="#333333"
+        android:layout_marginTop="20dp"
+        android:padding="8dp"
+        android:background="@drawable/score_background" />
 
     <TextView
         android:id="@+id/tie_score"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Ties: 0"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:textColor="#333333"
+        android:layout_marginTop="10dp"
+        android:padding="8dp"
+        android:background="@drawable/score_background" />
 
     <TextView
         android:id="@+id/computer_score"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Computer: 0"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:textColor="#333333"
+        android:layout_marginTop="10dp"
+        android:padding="8dp"
+        android:background="@drawable/score_background" />
 
     <TextView
         android:id="@+id/information"
@@ -102,7 +54,10 @@
         android:layout_height="wrap_content"
         android:text="info"
         android:gravity="center_horizontal"
-        android:layout_marginTop="20dp"
-        android:textSize="20dp" />
+        android:layout_marginTop="30dp"
+        android:textSize="20sp"
+        android:textColor="#00796B"
+        android:padding="12dp"
+        android:background="@drawable/info_background" />
 
 </LinearLayout>

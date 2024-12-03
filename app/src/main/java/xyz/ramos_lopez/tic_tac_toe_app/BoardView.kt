@@ -69,36 +69,50 @@ class BoardView : View {
         mPaint.color = Color.LTGRAY
         mPaint.strokeWidth = mBoardLineWidth.toFloat()
 
-        // Dibujar las líneas del tablero
+        // Calcular el ancho y alto de cada celda
         val cellWidth = boardWidth / 3
         val cellHeight = boardHeight / 3
 
-        // Líneas verticales
+        // Dibujar las líneas verticales del tablero
         canvas.drawLine(cellWidth.toFloat(), 0f, cellWidth.toFloat(), boardHeight.toFloat(), mPaint)
-        canvas.drawLine((cellWidth * 2).toFloat(), 0f, (cellWidth * 2).toFloat(), boardHeight.toFloat(), mPaint)
+        canvas.drawLine((2 * cellWidth).toFloat(), 0f, (2 * cellWidth).toFloat(), boardHeight.toFloat(), mPaint)
 
-        // Líneas horizontales
+        // Dibujar las líneas horizontales del tablero
         canvas.drawLine(0f, cellHeight.toFloat(), boardWidth.toFloat(), cellHeight.toFloat(), mPaint)
-        canvas.drawLine(0f, (cellHeight * 2).toFloat(), boardWidth.toFloat(), (cellHeight * 2).toFloat(), mPaint)
+        canvas.drawLine(0f, (2 * cellHeight).toFloat(), boardWidth.toFloat(), (2 * cellHeight).toFloat(), mPaint)
 
-        // Dibujar las X y O según el estado del juego
+        // Dibujar las imágenes de X y O según el estado del juego
         if (::mGame.isInitialized) {
             for (i in 0 until TicTacToeGame.BOARD_SIZE) {
                 val col = i % 3
                 val row = i / 3
 
+                // Definir los límites de la imagen dentro de la celda
                 val left = (col * cellWidth).toFloat() + mBoardLineWidth
                 val top = (row * cellHeight).toFloat() + mBoardLineWidth
                 val right = ((col + 1) * cellWidth).toFloat() - mBoardLineWidth
                 val bottom = ((row + 1) * cellHeight).toFloat() - mBoardLineWidth
 
-                val piece = mGame.getBoardValue(i)
-                if (piece == TicTacToeGame.HUMAN_PLAYER) {
-                    // Dibujar X
-                    canvas.drawBitmap(mHumanBitmap, null, RectF(left, top, right, bottom), null)
-                } else if (piece == TicTacToeGame.COMPUTER_PLAYER) {
-                    // Dibujar O
-                    canvas.drawBitmap(mComputerBitmap, null, RectF(left, top, right, bottom), null)
+                val pieza = mGame.getBoardValue(i)
+                when (pieza) {
+                    TicTacToeGame.HUMAN_PLAYER -> {
+                        // Dibujar la imagen de X
+                        canvas.drawBitmap(
+                            mHumanBitmap,
+                            null, // Fuente completa del bitmap
+                            RectF(left, top, right, bottom), // Destino donde dibujar
+                            null
+                        )
+                    }
+                    TicTacToeGame.COMPUTER_PLAYER -> {
+                        // Dibujar la imagen de O
+                        canvas.drawBitmap(
+                            mComputerBitmap,
+                            null, // Fuente completa del bitmap
+                            RectF(left, top, right, bottom), // Destino donde dibujar
+                            null
+                        )
+                    }
                 }
             }
         }
