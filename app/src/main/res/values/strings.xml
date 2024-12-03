@@ -19,8 +19,8 @@
     <!-- About Dialog -->
     <string name="about">About</string>
     <string name="app_icon_description">App Icon</string>
-    <string name="about_text">A simple Tic-Tac-Toe game\nDeveloped by Kevin Fabio Ramos López</string>
-    <string name="programmer_info">© 2024 All rights reserved</string>
+    <string name="programmer_info">A simple Tic-Tac-Toe game\nDeveloped by Kevin Fabio Ramos López</string>
+    <string name="copyright_text">© 2024 All rights reserved</string>
     <string name="ok">OK</string>
 
     <!-- Quit Dialog -->
