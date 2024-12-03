@@ -3,11 +3,15 @@ package xyz.ramos_lopez.tic_tac_toe_app
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.SharedPreferences
 import android.graphics.Color
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.*
+import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.preference.PreferenceManager
 
 class MainActivity : Activity() {
     companion object {
@@ -25,6 +29,14 @@ class MainActivity : Activity() {
 
     private lateinit var boardView: BoardView
 
+    // MediaPlayer variables
+    private var mHumanMediaPlayer: MediaPlayer? = null
+    private var mComputerMediaPlayer: MediaPlayer? = null
+
+    // Switch para sonido
+    private var isSoundEnabled: Boolean = true
+    private lateinit var soundSwitch: Switch
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main)
@@ -34,6 +46,29 @@ class MainActivity : Activity() {
 
         // Obtener referencias a las vistas
         infoTextView = findViewById(R.id.information)
+        soundSwitch = findViewById(R.id.sound_switch)
+
+        // Configurar el estado inicial del Switch y las preferencias
+        val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        isSoundEnabled = prefs.getBoolean("sound_enabled", true)
+        soundSwitch.isChecked = isSoundEnabled
+
+        // Escuchar cambios en el Switch
+        soundSwitch.setOnCheckedChangeListener { _, isChecked ->
+            isSoundEnabled = isChecked
+            prefs.edit().putBoolean("sound_enabled", isChecked).apply()
+            if (isChecked) {
+                // Re-inicializar los MediaPlayers si se activan los sonidos
+                mHumanMediaPlayer = MediaPlayer.create(this, R.raw.human_move)
+                mComputerMediaPlayer = MediaPlayer.create(this, R.raw.computer_move)
+            } else {
+                // Liberar los MediaPlayers si se desactivan los sonidos
+                mHumanMediaPlayer?.release()
+                mComputerMediaPlayer?.release()
+                mHumanMediaPlayer = null
+                mComputerMediaPlayer = null
+            }
+        }
 
         boardView = findViewById(R.id.board)
         boardView.setGame(game)
@@ -44,6 +79,22 @@ class MainActivity : Activity() {
         })
 
         startNewGame()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (isSoundEnabled) {
+            mHumanMediaPlayer = MediaPlayer.create(this, R.raw.human_move)
+            mComputerMediaPlayer = MediaPlayer.create(this, R.raw.computer_move)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        mHumanMediaPlayer?.release()
+        mComputerMediaPlayer?.release()
+        mHumanMediaPlayer = null
+        mComputerMediaPlayer = null
     }
 
     private fun startNewGame() {
@@ -62,12 +113,21 @@ class MainActivity : Activity() {
     }
 
     private fun onHumanMove() {
+        if (isSoundEnabled) {
+            mHumanMediaPlayer?.start()
+        }
+
         var winner = game.checkForWinner()
         if (winner == 0) {
             infoTextView.text = getString(R.string.turn_computer)
             val move = game.getComputerMove()
             if (move != -1) {
                 game.setMove(TicTacToeGame.COMPUTER_PLAYER, move)
+
+                if (isSoundEnabled) {
+                    mComputerMediaPlayer?.start()
+                }
+
                 boardView.invalidate()
             }
             winner = game.checkForWinner()

@@ -1,63 +1,71 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center_horizontal"
-    android:padding="16dp"
-    android:background="#f0f0f0">
-
-    <!-- Reemplazamos el TableLayout por el BoardView personalizado -->
-    <xyz.ramos_lopez.tic_tac_toe_app.BoardView
-        android:id="@+id/board"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/board_background" />
-
-    <TextView
-        android:id="@+id/human_score"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Human: 0"
-        android:textSize="18sp"
-        android:textColor="#333333"
-        android:layout_marginTop="20dp"
-        android:padding="8dp"
-        android:background="@drawable/score_background" />
-
-    <TextView
-        android:id="@+id/tie_score"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Ties: 0"
-        android:textSize="18sp"
-        android:textColor="#333333"
-        android:layout_marginTop="10dp"
-        android:padding="8dp"
-        android:background="@drawable/score_background" />
-
-    <TextView
-        android:id="@+id/computer_score"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Computer: 0"
-        android:textSize="18sp"
-        android:textColor="#333333"
-        android:layout_marginTop="10dp"
-        android:padding="8dp"
-        android:background="@drawable/score_background" />
-
-    <TextView
-        android:id="@+id/information"
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="info"
+        android:layout_height="match_parent"
         android:gravity="center_horizontal"
-        android:layout_marginTop="30dp"
-        android:textSize="20sp"
-        android:textColor="#00796B"
-        android:padding="12dp"
-        android:background="@drawable/info_background" />
+        android:padding="16dp"
+        android:background="#f0f0f0">
 
-</LinearLayout>
+        <!-- Switch para activar/desactivar sonidos -->
+        <Switch
+            android:id="@+id/sound_switch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sound"
+            android:checked="true"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- Resto de las vistas -->
+        <xyz.ramos_lopez.tic_tac_toe_app.BoardView
+            android:id="@+id/board"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/board_background" />
+
+        <TextView
+            android:id="@+id/human_score"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Human: 0"
+            android:textSize="18sp"
+            android:textColor="#333333"
+            android:layout_marginTop="20dp"
+            android:padding="8dp"
+            android:background="@drawable/score_background" />
+
+        <TextView
+            android:id="@+id/tie_score"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ties: 0"
+            android:textSize="18sp"
+            android:textColor="#333333"
+            android:layout_marginTop="10dp"
+            android:padding="8dp"
+            android:background="@drawable/score_background" />
+
+        <TextView
+            android:id="@+id/computer_score"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Computer: 0"
+            android:textSize="18sp"
+            android:textColor="#333333"
+            android:layout_marginTop="10dp"
+            android:padding="8dp"
+            android:background="@drawable/score_background" />
+
+        <TextView
+            android:id="@+id/information"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="info"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="30dp"
+            android:textSize="20sp"
+            android:textColor="#00796B"
+            android:padding="12dp"
+            android:background="@drawable/info_background" />
+
+    </LinearLayout>
