@@ -58,6 +58,8 @@ class MainActivity : Activity() {
         humanScore = mPrefs.getInt("humanScore", 0);
         computerScore = mPrefs.getInt("computerScore", 0);
         tieScore = mPrefs.getInt("tieScore", 0);
+        game.setDifficultyLevel(TicTacToeGame.DifficultyLevel.valueOf(mPrefs.getString("difficultyLevel", "Harder")!!))
+
         if (savedInstanceState == null) {
             startNewGame()
         } else {
@@ -72,6 +74,9 @@ class MainActivity : Activity() {
             tieScore = savedInstanceState.getInt("tieScore", 0)
             isSoundEnabled = savedInstanceState.getBoolean("isSoundEnabled", true)
             
+            savedInstanceState.getString("difficultyLevel")?.let { level ->
+                game.setDifficultyLevel(TicTacToeGame.DifficultyLevel.valueOf(level))
+            }
             updateScoreboard()
         }
 
@@ -129,6 +134,7 @@ class MainActivity : Activity() {
             putInt("humanScore", humanScore)
             putInt("computerScore", computerScore)
             putInt("tieScore", tieScore)
+            putString("difficultyLevel", game.getDifficultyLevel().name)
             apply()
         }
     }
@@ -143,6 +149,7 @@ class MainActivity : Activity() {
             putCharSequence("info", infoTextView.text)
             putChar("mGoFirst", mGoFirst)
             putBoolean("soundEnabled", isSoundEnabled)
+            outState.putString("difficultyLevel", game.getDifficultyLevel().name)
         }
     }
 
