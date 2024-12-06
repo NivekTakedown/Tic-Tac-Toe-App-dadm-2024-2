@@ -307,6 +307,13 @@ class MainActivity : Activity() {
                 showDialog(DIALOG_ABOUT_ID)
                 return true
             }
+            R.id.reset_scores -> {
+                humanScore = 0
+                computerScore = 0
+                tieScore = 0
+                updateScoreboard()
+                return true
+            }
         }
         return super.onOptionsItemSelected(item)
     }
