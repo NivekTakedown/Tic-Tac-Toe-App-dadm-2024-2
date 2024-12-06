@@ -137,5 +137,13 @@ class TicTacToeGame {
         return 1
     }
 
+    fun getBoardState(): CharArray {
+        return mBoard.clone()
+    }
+
+    fun setBoardState(board: CharArray) {
+        mBoard = board.clone()
+    }
+
     fun getBoardValue(position: Int): Char = mBoard[position]
 }

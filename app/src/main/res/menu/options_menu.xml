@@ -22,4 +22,11 @@
         android:title="@string/about"
         android:icon="@drawable/about_icon"
         android:showAsAction="never" />
+
+    <item
+        android:id="@+id/reset_scores"
+        android:icon="@drawable/reset_scores"
+        android:showAsAction="ifRoom"
+        android:title="@string/reset_scores" />
+
 </menu>
