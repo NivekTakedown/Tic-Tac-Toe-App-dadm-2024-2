@@ -41,6 +41,7 @@ class MainActivity : Activity() {
 
     // Preferencias para almacenar estado del sonido
     private var isSoundEnabled: Boolean = true
+    private lateinit var mPrefs: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,7 +54,10 @@ class MainActivity : Activity() {
         infoTextView = findViewById(R.id.information)
         soundSwitch = findViewById(R.id.sound_switch)
         boardView = findViewById(R.id.board)
-
+        mPrefs = getSharedPreferences("ttt_prefs", MODE_PRIVATE);
+        humanScore = mPrefs.getInt("humanScore", 0);
+        computerScore = mPrefs.getInt("computerScore", 0);
+        tieScore = mPrefs.getInt("tieScore", 0);
         if (savedInstanceState == null) {
             startNewGame()
         } else {
@@ -66,6 +70,8 @@ class MainActivity : Activity() {
             humanScore = savedInstanceState.getInt("humanScore", 0)
             computerScore = savedInstanceState.getInt("computerScore", 0)
             tieScore = savedInstanceState.getInt("tieScore", 0)
+            isSoundEnabled = savedInstanceState.getBoolean("isSoundEnabled", true)
+            
             updateScoreboard()
         }
 
@@ -116,6 +122,16 @@ class MainActivity : Activity() {
         releaseMediaPlayers()
     }
 
+    override fun onStop() {
+        super.onStop()
+        // Guardar las puntuaciones actuales
+        mPrefs.edit().apply {
+            putInt("humanScore", humanScore)
+            putInt("computerScore", computerScore)
+            putInt("tieScore", tieScore)
+            apply()
+        }
+    }
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.apply {
