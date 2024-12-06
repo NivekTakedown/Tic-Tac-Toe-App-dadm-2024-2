@@ -29,6 +29,7 @@ class MainActivity : Activity() {
     private lateinit var soundSwitch: Switch
     private lateinit var mHandler: Handler
     private var mIsComputerTurn = false
+    private var mGoFirst = TicTacToeGame.HUMAN_PLAYER
 
     private var humanScore = 0
     private var tieScore = 0
@@ -45,29 +46,62 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main)
         
-        mHandler = Handler(Looper.getMainLooper())  // Add this line
-
-        // Inicializar el juego
+        mHandler = Handler(Looper.getMainLooper())
+        
+        // Initialize game and views
         game = TicTacToeGame()
-
-        // Obtener referencias a las vistas
         infoTextView = findViewById(R.id.information)
         soundSwitch = findViewById(R.id.sound_switch)
         boardView = findViewById(R.id.board)
 
-        // Configurar preferencias y estado inicial del Switch de sonido
-        setupSoundPreferences()
+        if (savedInstanceState == null) {
+            startNewGame()
+        } else {
+            savedInstanceState.getCharArray("board")?.let { board ->
+                game.setBoardState(board)
+                boardView.setGame(game)
+                boardView.invalidate()
+                updateScoreboard()
+            }
+            humanScore = savedInstanceState.getInt("humanScore", 0)
+            computerScore = savedInstanceState.getInt("computerScore", 0)
+            tieScore = savedInstanceState.getInt("tieScore", 0)
+            updateScoreboard()
+        }
 
-        // Configurar el BoardView
+        // Setup sound preferences and board
+        setupSoundPreferences()
         boardView.setGame(game)
         boardView.setMoveListener(object : BoardView.MoveListener {
             override fun onMoveMade() {
                 onHumanMove()
             }
         })
+        
+        updateScoreboard()
+        boardView.invalidate()
+    }
 
-        // Iniciar un nuevo juego
-        startNewGame()
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+        
+        // Restore the game's state
+        savedInstanceState.getCharArray("board")?.let { board ->
+            game.setBoardState(board)
+        }
+        
+        // Restore scores and state
+        mIsComputerTurn = savedInstanceState.getBoolean("mIsComputerTurn")
+        humanScore = savedInstanceState.getInt("humanScore")
+        computerScore = savedInstanceState.getInt("computerScore")
+        tieScore = savedInstanceState.getInt("tieScore")
+        mGoFirst = savedInstanceState.getChar("mGoFirst")
+        isSoundEnabled = savedInstanceState.getBoolean("soundEnabled")
+        
+        // Restore UI state
+        infoTextView.text = savedInstanceState.getCharSequence("info")
+        soundSwitch.isChecked = isSoundEnabled
+        boardView.isEnabled = !mIsComputerTurn
     }
 
     override fun onResume() {
@@ -80,6 +114,20 @@ class MainActivity : Activity() {
     override fun onPause() {
         super.onPause()
         releaseMediaPlayers()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.apply {
+            putCharArray("board", game.getBoardState())
+            putBoolean("mIsComputerTurn", mIsComputerTurn)
+            putInt("humanScore", humanScore)
+            putInt("computerScore", computerScore)
+            putInt("tieScore", tieScore)
+            putCharSequence("info", infoTextView.text)
+            putChar("mGoFirst", mGoFirst)
+            putBoolean("soundEnabled", isSoundEnabled)
+        }
     }
 
     /**
