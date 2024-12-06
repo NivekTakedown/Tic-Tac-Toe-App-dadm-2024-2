@@ -7,6 +7,8 @@ import android.content.SharedPreferences
 import android.graphics.Color
 import android.media.MediaPlayer
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper  // Add this import
 import android.view.*
 import android.widget.Switch
 import android.widget.TextView
@@ -14,6 +16,7 @@ import android.widget.Toast
 import androidx.preference.PreferenceManager
 
 class MainActivity : Activity() {
+
     companion object {
         private const val DIALOG_DIFFICULTY_ID = 0
         private const val DIALOG_QUIT_ID = 1
@@ -22,24 +25,27 @@ class MainActivity : Activity() {
 
     private lateinit var game: TicTacToeGame
     private lateinit var infoTextView: TextView
+    private lateinit var boardView: BoardView
+    private lateinit var soundSwitch: Switch
+    private lateinit var mHandler: Handler
+    private var mIsComputerTurn = false
 
     private var humanScore = 0
     private var tieScore = 0
     private var computerScore = 0
 
-    private lateinit var boardView: BoardView
-
-    // MediaPlayer variables
+    // Variables para reproducir sonidos
     private var mHumanMediaPlayer: MediaPlayer? = null
     private var mComputerMediaPlayer: MediaPlayer? = null
 
-    // Switch para sonido
+    // Preferencias para almacenar estado del sonido
     private var isSoundEnabled: Boolean = true
-    private lateinit var soundSwitch: Switch
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main)
+        
+        mHandler = Handler(Looper.getMainLooper())  // Add this line
 
         // Inicializar el juego
         game = TicTacToeGame()
@@ -47,30 +53,12 @@ class MainActivity : Activity() {
         // Obtener referencias a las vistas
         infoTextView = findViewById(R.id.information)
         soundSwitch = findViewById(R.id.sound_switch)
-
-        // Configurar el estado inicial del Switch y las preferencias
-        val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        isSoundEnabled = prefs.getBoolean("sound_enabled", true)
-        soundSwitch.isChecked = isSoundEnabled
-
-        // Escuchar cambios en el Switch
-        soundSwitch.setOnCheckedChangeListener { _, isChecked ->
-            isSoundEnabled = isChecked
-            prefs.edit().putBoolean("sound_enabled", isChecked).apply()
-            if (isChecked) {
-                // Re-inicializar los MediaPlayers si se activan los sonidos
-                mHumanMediaPlayer = MediaPlayer.create(this, R.raw.human_move)
-                mComputerMediaPlayer = MediaPlayer.create(this, R.raw.computer_move)
-            } else {
-                // Liberar los MediaPlayers si se desactivan los sonidos
-                mHumanMediaPlayer?.release()
-                mComputerMediaPlayer?.release()
-                mHumanMediaPlayer = null
-                mComputerMediaPlayer = null
-            }
-        }
-
         boardView = findViewById(R.id.board)
+
+        // Configurar preferencias y estado inicial del Switch de sonido
+        setupSoundPreferences()
+
+        // Configurar el BoardView
         boardView.setGame(game)
         boardView.setMoveListener(object : BoardView.MoveListener {
             override fun onMoveMade() {
@@ -78,64 +66,130 @@ class MainActivity : Activity() {
             }
         })
 
+        // Iniciar un nuevo juego
         startNewGame()
     }
 
     override fun onResume() {
         super.onResume()
         if (isSoundEnabled) {
-            mHumanMediaPlayer = MediaPlayer.create(this, R.raw.human_move)
-            mComputerMediaPlayer = MediaPlayer.create(this, R.raw.computer_move)
+            initializeMediaPlayers()
         }
     }
 
     override fun onPause() {
         super.onPause()
+        releaseMediaPlayers()
+    }
+
+    /**
+     * Configura las preferencias de sonido y el Switch correspondiente.
+     */
+    private fun setupSoundPreferences() {
+        val prefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        isSoundEnabled = prefs.getBoolean("sound_enabled", true)
+        soundSwitch.isChecked = isSoundEnabled
+
+        soundSwitch.setOnCheckedChangeListener { _, isChecked ->
+            isSoundEnabled = isChecked
+            prefs.edit().putBoolean("sound_enabled", isChecked).apply()
+            manageMediaPlayers(isChecked)
+        }
+    }
+
+    /**
+     * Inicializa los MediaPlayers para los sonidos de movimiento.
+     */
+    private fun initializeMediaPlayers() {
+        mHumanMediaPlayer = MediaPlayer.create(this, R.raw.human_move)
+        mComputerMediaPlayer = MediaPlayer.create(this, R.raw.computer_move)
+    }
+
+    /**
+     * Libera los recursos de los MediaPlayers.
+     */
+    private fun releaseMediaPlayers() {
         mHumanMediaPlayer?.release()
         mComputerMediaPlayer?.release()
         mHumanMediaPlayer = null
         mComputerMediaPlayer = null
     }
 
+    /**
+     * Maneja la inicialización o liberación de MediaPlayers según el estado del sonido.
+     */
+    private fun manageMediaPlayers(enable: Boolean) {
+        if (enable) {
+            initializeMediaPlayers()
+        } else {
+            releaseMediaPlayers()
+        }
+    }
+
+    /**
+     * Inicia un nuevo juego, reseteando el tablero y las puntuaciones si es necesario.
+     */
     private fun startNewGame() {
         game.clearBoard()
-        boardView.isEnabled = true
+        mIsComputerTurn = false
+        boardView.isEnabled = true  // Ensure board is enabled at game start
         boardView.invalidate()
         infoTextView.text = getString(R.string.first_human)
         updateScoreboard()
     }
 
+    /**
+     * Actualiza el marcador en la interfaz de usuario.
+     */
     private fun updateScoreboard() {
-        // Actualiza el marcador en la pantalla
         findViewById<TextView>(R.id.human_score).text = "Human: $humanScore"
         findViewById<TextView>(R.id.tie_score).text = "Ties: $tieScore"
         findViewById<TextView>(R.id.computer_score).text = "Computer: $computerScore"
     }
 
+    /**
+     * Maneja el movimiento realizado por el humano y la respuesta de la computadora.
+     */
     private fun onHumanMove() {
+        if (mIsComputerTurn) return  // Ignore if it's computer's turn
+
         if (isSoundEnabled) {
             mHumanMediaPlayer?.start()
         }
 
         var winner = game.checkForWinner()
         if (winner == 0) {
+            mIsComputerTurn = true  // Set computer's turn
+            boardView.isEnabled = false  // Disable board during computer turn
             infoTextView.text = getString(R.string.turn_computer)
-            val move = game.getComputerMove()
-            if (move != -1) {
-                game.setMove(TicTacToeGame.COMPUTER_PLAYER, move)
-
-                if (isSoundEnabled) {
-                    mComputerMediaPlayer?.start()
+            
+            mHandler.postDelayed({
+                if (!isFinishing) {
+                    val move = game.getComputerMove()
+                    if (move != -1) {
+                        game.setMove(TicTacToeGame.COMPUTER_PLAYER, move)
+                        if (isSoundEnabled) {
+                            mComputerMediaPlayer?.start()
+                        }
+                        boardView.invalidate()
+                    }
+                    winner = game.checkForWinner()
+                    handleWinner(winner)
+                    mIsComputerTurn = false
+                    if (winner == 0) {  // Only re-enable if game isn't over
+                        boardView.isEnabled = true  // Re-enable board for human turn
+                    }
                 }
-
-                boardView.invalidate()
-            }
-            winner = game.checkForWinner()
+            }, 1000)
+        } else {
+            mIsComputerTurn = false
+            handleWinner(winner)
         }
-
-        handleWinner(winner)
     }
 
+    /**
+     * Gestiona el resultado del juego según quién haya ganado.
+     */
     private fun handleWinner(winner: Int) {
         infoTextView.text = when (winner) {
             0 -> getString(R.string.turn_human)
@@ -154,17 +208,23 @@ class MainActivity : Activity() {
         }
 
         if (winner != 0) {
-            // Juego terminado
+            // Deshabilitar el tablero si el juego ha terminado
             boardView.isEnabled = false
         }
         updateScoreboard()
     }
 
+    /**
+     * Crea el menú de opciones.
+     */
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.options_menu, menu)
         return true
     }
 
+    /**
+     * Maneja las selecciones del menú de opciones.
+     */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.new_game -> {
@@ -184,9 +244,12 @@ class MainActivity : Activity() {
                 return true
             }
         }
-        return false
+        return super.onOptionsItemSelected(item)
     }
 
+    /**
+     * Crea los diálogos según el ID proporcionado.
+     */
     override fun onCreateDialog(id: Int): Dialog {
         val builder = AlertDialog.Builder(this)
 
