@@ -2,7 +2,7 @@ package xyz.ramos_lopez.tic_tac_toe_app
 
 import kotlin.random.Random
 
-class TicTacToeGame {
+class TicTacToeGame : GameLogic {
     enum class DifficultyLevel {
         Easy, Harder, Expert
     }
@@ -11,8 +11,8 @@ class TicTacToeGame {
     private var mBoard = CharArray(BOARD_SIZE) { OPEN_SPOT }
     private val mRand = Random
 
-    fun getDifficultyLevel(): DifficultyLevel = mDifficultyLevel
-    fun setDifficultyLevel(difficultyLevel: DifficultyLevel) {
+    override fun getDifficultyLevel(): DifficultyLevel = mDifficultyLevel
+    override fun setDifficultyLevel(difficultyLevel: DifficultyLevel) {
         mDifficultyLevel = difficultyLevel
     }
 
@@ -24,7 +24,7 @@ class TicTacToeGame {
     }
 
     /** Limpia el tablero de todas las X y O estableciendo todas las posiciones a OPEN_SPOT. */
-    fun clearBoard() {
+    override fun clearBoard() {
         for (i in 0 until BOARD_SIZE) {
             mBoard[i] = OPEN_SPOT
         }
@@ -34,7 +34,7 @@ class TicTacToeGame {
      * Establece el jugador dado en la ubicación dada en el tablero del juego.
      * La ubicación debe estar disponible, o el tablero no cambiará.
      */
-    fun setMove(player: Char, location: Int) {
+    override fun setMove(player: Char, location: Int) {
         if (location in 0 until BOARD_SIZE && mBoard[location] == OPEN_SPOT) {
             mBoard[location] = player
         }
@@ -45,7 +45,7 @@ class TicTacToeGame {
      * para que la computadora se mueva realmente a esa ubicación.
      * @return El mejor movimiento para que la computadora haga (0-8).
      */
-    fun getComputerMove(): Int {
+    override fun getComputerMove(): Int {
         return when (mDifficultyLevel) {
             DifficultyLevel.Easy -> getRandomMove()
             DifficultyLevel.Harder -> {
@@ -100,7 +100,7 @@ class TicTacToeGame {
      * @return Devuelve 0 si no hay ganador o empate aún, 1 si es un empate, 2 si X ganó,
      * o 3 si O ganó.
      */
-    fun checkForWinner(): Int {
+    override fun checkForWinner(): Int {
         // Verificar victorias horizontales
         for (i in 0..6 step 3) {
             if (mBoard[i] == HUMAN_PLAYER && mBoard[i + 1] == HUMAN_PLAYER && mBoard[i + 2] == HUMAN_PLAYER)
@@ -137,13 +137,13 @@ class TicTacToeGame {
         return 1
     }
 
-    fun getBoardState(): CharArray {
+    override fun getBoardState(): CharArray {
         return mBoard.clone()
     }
 
-    fun setBoardState(board: CharArray) {
+    override fun setBoardState(board: CharArray) {
         mBoard = board.clone()
     }
 
-    fun getBoardValue(position: Int): Char = mBoard[position]
+    override fun getBoardValue(position: Int): Char = mBoard[position]
 }

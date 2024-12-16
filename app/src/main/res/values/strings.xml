@@ -41,4 +41,8 @@
     <string name="player_name">Player: %1$s</string>
     <string name="cancel">Cancel</string>
     <string name="player_label">Player:</string>
+
+    <string name="select_game_mode">Select Game Mode</string>
+    <string name="play_online">Play Online</string>
+    <string name="play_against_computer">Play Against Computer</string>
 </resources>

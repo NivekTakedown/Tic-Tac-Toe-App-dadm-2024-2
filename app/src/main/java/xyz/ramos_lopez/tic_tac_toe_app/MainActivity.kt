@@ -10,13 +10,20 @@ import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper  // Add this import
+import android.provider.Settings.Global.getString
 import android.view.*
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.preference.PreferenceManager
+
+
+
+
+
+
 // GameManager.kt
-class GameManager(private val game: TicTacToeGame) {
+class GameManager(private val game: GameLogic) {
     var isComputerTurn = false
     var goFirst = TicTacToeGame.HUMAN_PLAYER
 
@@ -152,7 +159,9 @@ class DialogManager(private val activity: MainActivity) {
             MainActivity.DIALOG_ABOUT_ID -> createAboutDialog(builder)
             else -> throw IllegalArgumentException("Unknown dialog id: $id")
         }
+
     }
+
 
     private fun createDifficultyDialog(builder: AlertDialog.Builder, game: TicTacToeGame): Dialog {
         builder.setTitle(R.string.difficulty_choose)
@@ -223,13 +232,7 @@ class MainActivity : Activity() {
 
         initializeComponents()
         setupViews()
-        usernameTextView = findViewById(R.id.username_text_view)
-        username = preferencesManager.loadUsername() ?: ""
-        if (username.isEmpty()) {
-            promptForUsername()
-        } else {
-            updateUsernameDisplay()
-        }
+
         if (savedInstanceState == null) {
             startNewGame()
         } else {
@@ -238,6 +241,63 @@ class MainActivity : Activity() {
 
         setupBoardView()
         updateScoreboard()
+        showGameModeDialog()
+    }
+    private fun showGameModeDialog() {
+        val options = arrayOf(
+            getString(R.string.play_online),
+            getString(R.string.play_against_computer)
+        ).map { it as CharSequence }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.select_game_mode))
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> startOnlineGame()
+                    1 -> startComputerGame()
+                }
+            }
+            .setCancelable(false)
+            .show()
+    }
+    private fun startOnlineGame() {
+        // Lógica para iniciar el juego en línea
+    }
+
+    private fun startComputerGame() {
+        // Lógica para iniciar el juego contra la máquina
+    }
+
+    private fun initializeComponents() {
+        mHandler = Handler(Looper.getMainLooper())
+        game = TicTacToeGame()
+        gameManager = GameManager(game)
+        soundManager = SoundManager(this)
+        preferencesManager = PreferencesManager(this)
+        dialogManager = DialogManager(this)
+
+        preferencesManager.loadGameState(gameManager, game)
+        soundManager.isSoundEnabled = preferencesManager.loadSoundPreference()
+    }
+
+    private fun setupViews() {
+        infoTextView = findViewById(R.id.information)
+        soundSwitch = findViewById(R.id.sound_switch)
+        boardView = findViewById(R.id.board)
+        usernameTextView = findViewById(R.id.username_text_view)
+
+        soundSwitch.isChecked = soundManager.isSoundEnabled
+        soundSwitch.setOnCheckedChangeListener { _, isChecked ->
+            soundManager.updateSoundState(isChecked)
+            preferencesManager.saveSoundPreference(isChecked)
+        }
+
+        username = preferencesManager.loadUsername() ?: ""
+        if (username.isEmpty()) {
+            promptForUsername()
+        } else {
+            updateUsernameDisplay()
+        }
     }
 
     private fun promptForUsername() {
@@ -263,30 +323,6 @@ class MainActivity : Activity() {
 
     private fun updateUsernameDisplay() {
         usernameTextView.text = getString(R.string.player_name, username)
-    }
-
-    private fun initializeComponents() {
-        mHandler = Handler(Looper.getMainLooper())
-        game = TicTacToeGame()
-        gameManager = GameManager(game)
-        soundManager = SoundManager(this)
-        preferencesManager = PreferencesManager(this)
-        dialogManager = DialogManager(this)
-
-        preferencesManager.loadGameState(gameManager, game)
-        soundManager.isSoundEnabled = preferencesManager.loadSoundPreference()
-    }
-
-    private fun setupViews() {
-        infoTextView = findViewById(R.id.information)
-        soundSwitch = findViewById(R.id.sound_switch)
-        boardView = findViewById(R.id.board)
-
-        soundSwitch.isChecked = soundManager.isSoundEnabled
-        soundSwitch.setOnCheckedChangeListener { _, isChecked ->
-            soundManager.updateSoundState(isChecked)
-            preferencesManager.saveSoundPreference(isChecked)
-        }
     }
 
     private fun setupBoardView() {
@@ -423,6 +459,7 @@ class MainActivity : Activity() {
             putChar("mGoFirst", gameManager.goFirst)
             putBoolean("soundEnabled", soundManager.isSoundEnabled)
             putString("difficultyLevel", game.getDifficultyLevel().name)
+            putString("username", username)
         }
     }
 
@@ -454,5 +491,8 @@ class MainActivity : Activity() {
         savedInstanceState.getString("difficultyLevel")?.let { level ->
             game.setDifficultyLevel(TicTacToeGame.DifficultyLevel.valueOf(level))
         }
+
+        username = savedInstanceState.getString("username", "")
+        updateUsernameDisplay()
     }
 }
