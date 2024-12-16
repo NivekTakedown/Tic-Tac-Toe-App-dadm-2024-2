@@ -35,4 +35,10 @@
     <string name="result_tie">It\'s a tie!</string>
     <string name="result_human_wins">You win!</string>
     <string name="result_computer_wins">Computer wins!</string>
+    <string name="reset_scores">Reset Scores</string>
+    <string name="edit_username">Edit Username</string>
+    <string name="enter_username">Enter Username</string>
+    <string name="player_name">Player: %1$s</string>
+    <string name="cancel">Cancel</string>
+    <string name="player_label">Player:</string>
 </resources>

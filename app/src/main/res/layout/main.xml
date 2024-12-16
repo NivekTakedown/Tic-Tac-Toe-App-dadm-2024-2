@@ -68,4 +68,12 @@
             android:padding="12dp"
             android:background="@drawable/info_background" />
 
+        <TextView
+        android:id="@+id/username_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/player_label"
+        android:textSize="18sp"
+        android:layout_margin="16dp" />
+
     </LinearLayout>
