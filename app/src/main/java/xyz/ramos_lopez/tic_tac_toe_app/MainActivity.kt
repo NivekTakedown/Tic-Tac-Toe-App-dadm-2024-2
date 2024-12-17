@@ -224,6 +224,7 @@ class MainActivity : Activity(),GameStateListener {
     private lateinit var username: String
     private lateinit var usernameTextView: TextView
     private lateinit var onlineGameManager: OnlineGameManager
+    
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -344,16 +345,15 @@ class MainActivity : Activity(),GameStateListener {
         setupViews()
     }
     override fun onGameStateChanged() {
-        runOnUiThread {
-            boardView.invalidate()
-            (game as? OnlineTicTacToeGame)?.let { onlineGame ->
-                onlineGameManager.getGameState(onlineGame.gameId) { gameState ->
-                    updateOnlineGameUI(gameState)
-                }
-            }
+        boardView.invalidate()
+        val winner = game.checkForWinner()
+        if (winner != 0) {
+            handleWinner(winner)
+        } else {
+            val info = if ((game as OnlineTicTacToeGame).isMyTurn) "Tu turno" else "Turno del oponente"
+            infoTextView.text = info
         }
     }
-
     private fun updateOnlineGameUI(onlineGame: OnlineGame) {
         val isPlayer1 = username == onlineGame.player1
         val mySymbol = if (isPlayer1) onlineGame.player1Symbol else onlineGame.player2Symbol
@@ -521,18 +521,27 @@ class MainActivity : Activity(),GameStateListener {
     }
 
     private fun handleWinner(winner: Int) {
-        gameManager.updateScores(winner)
-        infoTextView.text = when (winner) {
-            0 -> getString(R.string.turn_human)
-            1 -> getString(R.string.result_tie)
-            2 -> getString(R.string.result_human_wins)
-            else -> getString(R.string.result_computer_wins)
+        val message = when (winner) {
+            1 -> "¡Empate!"
+            2 -> "¡Has ganado!"
+            3 -> "Has perdido."
+            else -> ""
         }
+        AlertDialog.Builder(this)
+            .setTitle("Fin del juego")
+            .setMessage(message)
+            .setPositiveButton("Reiniciar") { _, _ -> startNewGame() }
+            .setNegativeButton("Salir") { _, _ -> finish() }
+            .show()
+    }
 
-        if (winner != 0) {
-            boardView.isEnabled = false
-        }
-        updateScoreboard()
+    private fun showEndGameDialog(message: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Game Over")
+            .setMessage(message)
+            .setPositiveButton("Restart") { _, _ -> startNewGame() }
+            .setNegativeButton("Quit") { _, _ -> finish() }
+            .show()
     }
 
     private fun updateScoreboard() {
@@ -542,14 +551,17 @@ class MainActivity : Activity(),GameStateListener {
     }
 
     private fun startNewGame() {
-        game.clearBoard()
+        if (game is OnlineTicTacToeGame) {
+            (game as OnlineTicTacToeGame).restartGame()
+        } else {
+            game.clearBoard()
+        }
         gameManager.isComputerTurn = false
         boardView.isEnabled = true
         boardView.invalidate()
         infoTextView.text = getString(R.string.first_human)
         updateScoreboard()
     }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.options_menu, menu)
         return true

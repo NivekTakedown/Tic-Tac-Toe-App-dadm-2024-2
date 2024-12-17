@@ -20,7 +20,7 @@ class OnlineTicTacToeGame(
     }
     private var mBoard = CharArray(BOARD_SIZE) { OPEN_SPOT }
     private val gameRef = database.getReference("partidas_activas").child(gameId)
-    private var isMyTurn = false
+    var isMyTurn = false
     private var mySymbol: Char = OPEN_SPOT
     private var gameStateListener: GameStateListener? = null
     private var currentGame: OnlineGame? = null
@@ -111,48 +111,66 @@ class OnlineTicTacToeGame(
     }
 
     override fun checkForWinner(): Int {
-        // Check for winner
-        // Return: 0 for no winner, 1 for tie, 2 for HUMAN_PLAYER, 3 for COMPUTER_PLAYER
-        
-        // Check rows
+        // Comprobar filas
         for (i in 0..6 step 3) {
-            if (mBoard[i] != OPEN_SPOT && 
-                mBoard[i] == mBoard[i + 1] && 
+            if (mBoard[i] != OPEN_SPOT &&
+                mBoard[i] == mBoard[i + 1] &&
                 mBoard[i] == mBoard[i + 2]) {
-                return if (mBoard[i] == HUMAN_PLAYER) 2 else 3
+                val winner = if (mBoard[i] == mySymbol) 2 else 3
+                updateGameStatus(winner)
+                return winner
             }
         }
 
-        // Check columns
+        // Comprobar columnas
         for (i in 0..2) {
-            if (mBoard[i] != OPEN_SPOT && 
-                mBoard[i] == mBoard[i + 3] && 
+            if (mBoard[i] != OPEN_SPOT &&
+                mBoard[i] == mBoard[i + 3] &&
                 mBoard[i] == mBoard[i + 6]) {
-                return if (mBoard[i] == HUMAN_PLAYER) 2 else 3
+                val winner = if (mBoard[i] == mySymbol) 2 else 3
+                updateGameStatus(winner)
+                return winner
             }
         }
 
-        // Check diagonals
-        if (mBoard[0] != OPEN_SPOT && 
-            mBoard[0] == mBoard[4] && 
+        // Comprobar diagonales
+        if (mBoard[0] != OPEN_SPOT &&
+            mBoard[0] == mBoard[4] &&
             mBoard[0] == mBoard[8]) {
-            return if (mBoard[0] == HUMAN_PLAYER) 2 else 3
-        }
-        
-        if (mBoard[2] != OPEN_SPOT && 
-            mBoard[2] == mBoard[4] && 
-            mBoard[2] == mBoard[6]) {
-            return if (mBoard[2] == HUMAN_PLAYER) 2 else 3
+            val winner = if (mBoard[0] == mySymbol) 2 else 3
+            updateGameStatus(winner)
+            return winner
         }
 
-        // Check for tie
+        if (mBoard[2] != OPEN_SPOT &&
+            mBoard[2] == mBoard[4] &&
+            mBoard[2] == mBoard[6]) {
+            val winner = if (mBoard[2] == mySymbol) 2 else 3
+            updateGameStatus(winner)
+            return winner
+        }
+
+        // Comprobar empate
         if (!mBoard.contains(OPEN_SPOT)) {
+            updateGameStatus(1)
             return 1
         }
 
-        return 0 // No winner yet
+        return 0 // No hay ganador aún
     }
 
+    private fun updateGameStatus(winner: Int) {
+        val updates = when (winner) {
+            1 -> mapOf("status" to "finished", "winner" to "tie")
+            2 -> mapOf("status" to "finished", "winner" to currentPlayer)
+            3 -> {
+                val opponent = if (currentGame?.player1 == currentPlayer) currentGame?.player2 else currentGame?.player1
+                mapOf("status" to "finished", "winner" to opponent)
+            }
+            else -> emptyMap()
+        }
+        gameRef.updateChildren(updates)
+    }
     // These methods are not used in online game but required by interface
     override fun getDifficultyLevel(): TicTacToeGame.DifficultyLevel = 
         TicTacToeGame.DifficultyLevel.Expert
@@ -162,4 +180,14 @@ class OnlineTicTacToeGame(
     }
 
     override fun getComputerMove(): Int = -1 // Not used in online game
+    override fun restartGame() {
+        clearBoard()
+        val updates = mapOf(
+            "board" to List(BOARD_SIZE) { "" },
+            "currentTurn" to currentGame?.player1,
+            "status" to "active",
+            "winner" to null
+        )
+        gameRef.updateChildren(updates)
+    }
 }

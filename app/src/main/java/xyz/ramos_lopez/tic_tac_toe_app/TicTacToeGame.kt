@@ -146,4 +146,7 @@ class TicTacToeGame : GameLogic {
     }
 
     override fun getBoardValue(position: Int): Char = mBoard[position]
+    override fun restartGame() {
+        TODO("Not yet implemented")
+    }
 }

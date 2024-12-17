@@ -10,4 +10,5 @@ interface GameLogic {
     fun getBoardState(): CharArray
     fun setBoardState(board: CharArray)
     fun getBoardValue(position: Int): Char
+    fun restartGame()
 }

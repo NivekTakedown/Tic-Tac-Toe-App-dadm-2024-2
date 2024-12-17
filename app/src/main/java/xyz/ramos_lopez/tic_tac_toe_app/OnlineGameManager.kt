@@ -39,6 +39,8 @@ class OnlineGameManager(private val database: FirebaseDatabase) {
         }
     }
 
+
+
     fun getAvailableGames(callback: (List<OnlineGame>) -> Unit) {
         gamesRef.orderByChild("status")
             .equalTo("waiting")
@@ -126,4 +128,6 @@ class OnlineGameManager(private val database: FirebaseDatabase) {
     fun leaveGame(gameId: String) {
         gamesRef.child(gameId).removeValue()
     }
+
+
 }
