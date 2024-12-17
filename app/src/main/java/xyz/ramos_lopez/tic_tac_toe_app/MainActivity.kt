@@ -1,4 +1,5 @@
 package xyz.ramos_lopez.tic_tac_toe_app
+import OnlineTicTacToeGame
 import android.widget.EditText
 import android.text.InputType
 import android.app.Activity
@@ -14,10 +15,7 @@ import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.preference.PreferenceManager
-
-
-
-
+import com.google.firebase.database.FirebaseDatabase
 
 
 // GameManager.kt
@@ -223,14 +221,20 @@ class MainActivity : Activity() {
     private lateinit var mHandler: Handler
     private lateinit var username: String
     private lateinit var usernameTextView: TextView
+    private lateinit var onlineGameManager: OnlineGameManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.main)
-        // Remove initial game initialization
-        // game = TicTacToeGame()
+        
+        // Initialize managers first
         soundManager = SoundManager(this)
+        preferencesManager = PreferencesManager(this)
+        onlineGameManager = OnlineGameManager(FirebaseDatabase.getInstance())
+
+        // Load username early
+        username = preferencesManager.loadUsername() ?: ""
+        
         if (savedInstanceState == null) {
             showGameModeDialog()
         } else {
@@ -239,6 +243,25 @@ class MainActivity : Activity() {
             setupViews()
             restoreGameState(savedInstanceState)
         }
+    }
+    private fun showWaitingDialog(gameId: String) {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Waiting for opponent")
+            .setMessage("Game ID: $gameId\nWaiting for another player to join...")
+            .setCancelable(false)
+            .setNegativeButton("Cancel") { _, _ ->
+                onlineGameManager.leaveGame(gameId)
+            }
+            .create()
+
+        onlineGameManager.listenForGameChanges(gameId) { game ->
+            if (game.status == "active") {
+                dialog.dismiss()
+                startOnlineGame(gameId)
+            }
+        }
+
+        dialog.show()
     }
     private fun showGameModeDialog() {
         val options = arrayOf(
@@ -250,17 +273,72 @@ class MainActivity : Activity() {
             .setTitle(getString(R.string.select_game_mode))
             .setItems(options) { _, which ->
                 when (which) {
-                    0 -> startOnlineGame()
+                    0 -> showOnlineGameDialog() // Changed from startOnlineGame()
                     1 -> startComputerGame()
                 }
             }
             .setCancelable(false)
             .show()
     }
-    private fun startOnlineGame() {
-        //no implementation yet print
-        Toast.makeText(this, "Online game not implemented yet", Toast.LENGTH_SHORT).show()
+    private fun showOnlineGameDialog() {
+        if (!::username.isInitialized || username.isEmpty()) {
+            promptForUsername {
+                // Show online game options after username is set
+                showOnlineGameOptions()
+            }
+        } else {
+            showOnlineGameOptions()
+        }
+    }
+    private fun showOnlineGameOptions() {
+        val options = arrayOf("Create Game", "Join Game")
+        AlertDialog.Builder(this)
+            .setTitle("Online Game")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> createOnlineGame()
+                    1 -> showAvailableGames()
+                }
+            }
+            .show()
+    }
 
+    private fun createOnlineGame() {
+        try {
+            onlineGameManager.createGame(username) { gameId ->
+                showWaitingDialog(gameId)
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error creating game: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showAvailableGames() {
+        onlineGameManager.getAvailableGames { games ->
+            val gameItems = games.map { "${it.player1}'s game" }.toTypedArray()
+            AlertDialog.Builder(this)
+                .setTitle("Available Games")
+                .setItems(gameItems) { _, which ->
+                    joinGame(games[which].gameId)
+                }
+                .show()
+        }
+    }
+
+    private fun joinGame(gameId: String) {
+        onlineGameManager.joinGame(gameId, username) { success ->
+            if (success) {
+                startOnlineGame(gameId)
+            } else {
+                Toast.makeText(this, "Unable to join game", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun startOnlineGame(gameId: String) {
+        game = OnlineTicTacToeGame(gameId, username, FirebaseDatabase.getInstance())
+        initializeComponents()
+        setupViews()
     }
 
     private fun startComputerGame() {
@@ -286,7 +364,7 @@ class MainActivity : Activity() {
         preferencesManager = PreferencesManager(this)
         dialogManager = DialogManager(this)
 
-        // Removed redundant soundManager initialization
+        // Load preferences
         preferencesManager.loadGameState(gameManager, game)
         soundManager.isSoundEnabled = preferencesManager.loadSoundPreference()
     }
@@ -312,7 +390,7 @@ class MainActivity : Activity() {
         setupBoardView() 
     }
 
-    private fun promptForUsername() {
+    private fun promptForUsername(onComplete: () -> Unit = {}) {
         val builder = AlertDialog.Builder(this)
         builder.setTitle(R.string.enter_username)
 
@@ -321,9 +399,14 @@ class MainActivity : Activity() {
         builder.setView(input)
 
         builder.setPositiveButton(R.string.ok) { _, _ ->
-            username = input.text.toString()
-            preferencesManager.saveUsername(username)
-            updateUsernameDisplay()
+            if (input.text.toString().isNotEmpty()) {
+                username = input.text.toString()
+                preferencesManager.saveUsername(username)
+                updateUsernameDisplay()
+                onComplete()
+            } else {
+                Toast.makeText(this, "Username cannot be empty", Toast.LENGTH_SHORT).show()
+            }
         }
         builder.setNegativeButton(R.string.cancel) { dialog, _ ->
             dialog.cancel()
