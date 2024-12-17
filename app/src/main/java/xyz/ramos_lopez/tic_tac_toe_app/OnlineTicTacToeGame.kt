@@ -8,7 +8,7 @@ import xyz.ramos_lopez.tic_tac_toe_app.TicTacToeGame
 
 
 class OnlineTicTacToeGame(
-    private val gameId: String,
+    val gameId: String,
     private val currentPlayer: String,
     private val database: FirebaseDatabase
 ) : GameLogic {
@@ -20,12 +20,19 @@ class OnlineTicTacToeGame(
     }
     private var mBoard = CharArray(BOARD_SIZE) { OPEN_SPOT }
     private val gameRef = database.getReference("partidas_activas").child(gameId)
+    private var isMyTurn = false
+    private var mySymbol: Char = OPEN_SPOT
+    private var gameStateListener: GameStateListener? = null
+    private var currentGame: OnlineGame? = null
 
     init {
         gameRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val game = snapshot.getValue(OnlineGame::class.java)
-                game?.let { updateGameState(it) }
+                game?.let { 
+                    currentGame = it
+                    updateGameState(it)
+                }
             }
             
             override fun onCancelled(error: DatabaseError) {
@@ -34,26 +41,51 @@ class OnlineTicTacToeGame(
         })
     }
 
+
+    fun setGameStateListener(listener: GameStateListener) {
+        gameStateListener = listener
+    }
+
     private fun updateGameState(game: OnlineGame) {
+        // Clear board first
+        mBoard = CharArray(BOARD_SIZE) { OPEN_SPOT }
+        
+        // Only update non-empty cells
         game.board.forEachIndexed { index, value ->
             mBoard[index] = when(value) {
-                "X" -> HUMAN_PLAYER
-                "O" -> COMPUTER_PLAYER
+                game.player1Symbol -> HUMAN_PLAYER
+                game.player2Symbol -> COMPUTER_PLAYER
                 else -> OPEN_SPOT
             }
         }
+        
+        isMyTurn = game.currentTurn == currentPlayer
+        mySymbol = if (currentPlayer == game.player1) HUMAN_PLAYER else COMPUTER_PLAYER
+        gameStateListener?.onGameStateChanged()
     }
 
 
     override fun setMove(player: Char, location: Int) {
-        if (location in 0 until BOARD_SIZE && mBoard[location] == OPEN_SPOT) {
-            val updates = hashMapOf<String, Any>(
-                "board/${location}" to player.toString(),
-                "currentTurn" to if(currentPlayer == player.toString()) "player2" else "player1"
-            )
+        if (!isMyTurn || location !in 0 until BOARD_SIZE || mBoard[location] != OPEN_SPOT) {
+            return
+        }
+
+        currentGame?.let { game ->
+            val symbol = if (currentPlayer == game.player1) game.player1Symbol else game.player2Symbol
+            val nextPlayer = if (currentPlayer == game.player1) game.player2 else game.player1
+            
+            val updates = mutableMapOf<String, Any>()
+            updates["board/$location"] = symbol
+            updates["currentTurn"] = nextPlayer ?: ""
+
             gameRef.updateChildren(updates)
+                .addOnSuccessListener {
+                    mBoard[location] = player
+                    gameStateListener?.onGameStateChanged()
+                }
         }
     }
+
 
     override fun clearBoard() {
         val emptyBoard = List(BOARD_SIZE) { "" }

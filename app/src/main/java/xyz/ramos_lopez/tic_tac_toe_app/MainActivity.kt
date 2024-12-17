@@ -1,4 +1,6 @@
 package xyz.ramos_lopez.tic_tac_toe_app
+import GameStateListener
+import OnlineGame
 import OnlineTicTacToeGame
 import android.widget.EditText
 import android.text.InputType
@@ -203,7 +205,7 @@ class DialogManager(private val activity: MainActivity) {
 }
 
 // MainActivity.kt
-class MainActivity : Activity() {
+class MainActivity : Activity(),GameStateListener {
     companion object {
         const val DIALOG_DIFFICULTY_ID = 0
         const val DIALOG_QUIT_ID = 1
@@ -337,8 +339,48 @@ class MainActivity : Activity() {
 
     private fun startOnlineGame(gameId: String) {
         game = OnlineTicTacToeGame(gameId, username, FirebaseDatabase.getInstance())
+        (game as OnlineTicTacToeGame).setGameStateListener(this)
         initializeComponents()
         setupViews()
+    }
+    override fun onGameStateChanged() {
+        runOnUiThread {
+            boardView.invalidate()
+            (game as? OnlineTicTacToeGame)?.let { onlineGame ->
+                onlineGameManager.getGameState(onlineGame.gameId) { gameState ->
+                    updateOnlineGameUI(gameState)
+                }
+            }
+        }
+    }
+
+    private fun updateOnlineGameUI(onlineGame: OnlineGame) {
+        val isPlayer1 = username == onlineGame.player1
+        val mySymbol = if (isPlayer1) onlineGame.player1Symbol else onlineGame.player2Symbol
+        val opponentName = if (isPlayer1) onlineGame.player2 else onlineGame.player1
+        
+        infoTextView.text = when {
+            onlineGame.currentTurn == username -> "Your turn ($mySymbol)"
+            else -> "$opponentName's turn (${if (isPlayer1) onlineGame.player2Symbol else onlineGame.player1Symbol})"
+        }
+        
+        boardView.isEnabled = onlineGame.currentTurn == username
+        
+        // Only update non-empty cells
+        onlineGame.board.forEachIndexed { index, symbol ->
+            if (symbol.isNotEmpty()) {
+                game.setMove(
+                    when(symbol) {
+                        onlineGame.player1Symbol -> TicTacToeGame.HUMAN_PLAYER
+                        onlineGame.player2Symbol -> TicTacToeGame.COMPUTER_PLAYER
+                        else -> TicTacToeGame.OPEN_SPOT
+                    },
+                    index
+                )
+            }
+        }
+        
+        boardView.invalidate()
     }
 
     private fun startComputerGame() {
@@ -424,7 +466,13 @@ class MainActivity : Activity() {
         boardView.setGame(game)
         boardView.setMoveListener(object : BoardView.MoveListener {
             override fun onMoveMade() {
-                handleHumanMove()
+                if (game is OnlineTicTacToeGame) {
+                    // Online game move
+                    soundManager.playHumanSound()
+                } else {
+                    // Computer game move
+                    handleHumanMove()
+                }
             }
         })
     }

@@ -5,5 +5,7 @@ data class OnlineGame(
     var board: List<String> = List(9) { "" },
     var currentTurn: String = "",
     var winner: String? = null,
-    var status: String = "waiting" // waiting, active, finished
+    var status: String = "waiting", // waiting, active, finished
+    var player1Symbol: String = "X",
+    var player2Symbol: String = "O"
 )

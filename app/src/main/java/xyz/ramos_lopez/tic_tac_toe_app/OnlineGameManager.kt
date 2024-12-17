@@ -13,9 +13,11 @@ class OnlineGameManager(private val database: FirebaseDatabase) {
         val game = OnlineGame(
             gameId = gameId,
             player1 = player1,
-            currentTurn = "player1",
+            currentTurn = player1,
             status = "waiting",
-            board = List(9) { "" }
+            board = List(9) { "" },
+            player1Symbol = "X",
+            player2Symbol = "O"
         )
         
         gamesRef.child(gameId).setValue(game)
@@ -28,7 +30,8 @@ class OnlineGameManager(private val database: FirebaseDatabase) {
             if (game?.status == "waiting") {
                 gamesRef.child(gameId).updateChildren(mapOf(
                     "player2" to player2,
-                    "status" to "active"
+                    "status" to "active",
+                    "currentTurn" to game.player1 // Ensure player1 starts
                 )).addOnSuccessListener { callback(true) }
             } else {
                 callback(false)
@@ -52,16 +55,23 @@ class OnlineGameManager(private val database: FirebaseDatabase) {
                 }
             })
     }
-
+    fun getGameState(gameId: String, callback: (OnlineGame) -> Unit) {
+        gamesRef.child(gameId).get().addOnSuccessListener { snapshot ->
+            snapshot.getValue(OnlineGame::class.java)?.let { callback(it) }
+        }
+    }
     fun makeMove(gameId: String, position: Int, player: String, callback: (Boolean) -> Unit) {
         gamesRef.child(gameId).get().addOnSuccessListener { snapshot ->
             val game = snapshot.getValue(OnlineGame::class.java)
             if (game?.currentTurn == player && game.board[position].isEmpty()) {
-                val updates = mutableMapOf<String, Any>()
-                updates["board/$position"] = player
-                updates["currentTurn"] = if (player == game.player1) game.player2!! else game.player1
+                val symbol = if (player == game.player1) "X" else "O"
+                val updates = hashMapOf<String, Any>(
+                    "board/$position" to symbol,
+                    "currentTurn" to if (player == game.player1) game.player2!! else game.player1
+                )
                 gamesRef.child(gameId).updateChildren(updates)
                     .addOnSuccessListener { callback(true) }
+                    .addOnFailureListener { callback(false) }
             } else {
                 callback(false)
             }

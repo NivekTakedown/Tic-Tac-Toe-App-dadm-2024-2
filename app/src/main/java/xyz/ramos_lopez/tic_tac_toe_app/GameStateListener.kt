@@ -1,0 +1,3 @@
+interface GameStateListener {
+    fun onGameStateChanged()
+}
