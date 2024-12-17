@@ -106,20 +106,41 @@ class PreferencesManager(private val context: Activity) {
     private val prefs: SharedPreferences = context.getSharedPreferences("ttt_prefs", Activity.MODE_PRIVATE)
 
     fun loadGameState(gameManager: GameManager, game: GameLogic) {
+        // Cargar puntuaciones
         gameManager.humanScore = prefs.getInt("humanScore", 0)
         gameManager.computerScore = prefs.getInt("computerScore", 0)
         gameManager.tieScore = prefs.getInt("tieScore", 0)
+        
+        // Cargar dificultad
         game.setDifficultyLevel(TicTacToeGame.DifficultyLevel.valueOf(
             prefs.getString("difficultyLevel", "Harder")!!
         ))
+
+        // Cargar estado del tablero si existe
+        prefs.getString("boardState", null)?.let { boardState ->
+            game.setBoardState(boardState.toCharArray())
+        }
+
+        // Cargar turno actual
+        gameManager.isComputerTurn = prefs.getBoolean("isComputerTurn", false)
     }
 
     fun saveGameState(gameManager: GameManager, game: GameLogic) {
         prefs.edit().apply {
+            // Guardar puntuaciones
             putInt("humanScore", gameManager.humanScore)
             putInt("computerScore", gameManager.computerScore)
             putInt("tieScore", gameManager.tieScore)
+            
+            // Guardar dificultad
             putString("difficultyLevel", game.getDifficultyLevel().name)
+            
+            // Guardar estado del tablero
+            putString("boardState", String(game.getBoardState()))
+            
+            // Guardar turno actual
+            putBoolean("isComputerTurn", gameManager.isComputerTurn)
+            
             apply()
         }
     }
@@ -226,7 +247,7 @@ class MainActivity : Activity(), GameStateListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main)
-
+        
         // Initialize managers first
         soundManager = SoundManager(this)
         preferencesManager = PreferencesManager(this)
@@ -234,10 +255,11 @@ class MainActivity : Activity(), GameStateListener {
 
         // Load username early
         username = preferencesManager.loadUsername() ?: ""
-
+        
         if (savedInstanceState == null) {
             showGameModeDialog()
         } else {
+            // Si hay un estado guardado, restaurarlo
             game = TicTacToeGame()
             initializeComponents()
             setupViews()
@@ -401,16 +423,23 @@ class MainActivity : Activity(), GameStateListener {
         game = TicTacToeGame()
         initializeComponents()
         setupViews()
-        restorePreviousState()
+        restorePreviousState()  // Esto cargará el estado guardado
     }
 
     private fun restorePreviousState() {
-        preferencesManager.loadGameState(gameManager, game)
-        boardView.setGame(game)
-        boardView.invalidate()
-        updateScoreboard()
-        if (gameManager.isComputerTurn) {
-            handleComputerTurn()
+        if (game !is OnlineTicTacToeGame) {  // Solo restaurar estado para juego local
+            preferencesManager.loadGameState(gameManager, game)
+            boardView.setGame(game)
+            boardView.invalidate()
+            updateScoreboard()
+            
+            // Restaurar el estado del turno
+            if (gameManager.isComputerTurn) {
+                handleComputerTurn()
+            } else {
+                boardView.isEnabled = true
+                infoTextView.text = getString(R.string.turn_human)
+            }
         }
     }
 
@@ -636,7 +665,9 @@ class MainActivity : Activity(), GameStateListener {
 
     override fun onStop() {
         super.onStop()
-        preferencesManager.saveGameState(gameManager, game)
+        if (game !is OnlineTicTacToeGame) {  // Solo guardar estado para juego local
+            preferencesManager.saveGameState(gameManager, game)
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
