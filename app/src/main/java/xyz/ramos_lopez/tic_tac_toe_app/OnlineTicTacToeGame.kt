@@ -47,20 +47,21 @@ class OnlineTicTacToeGame(
     }
 
     private fun updateGameState(game: OnlineGame) {
-        // Clear board first
-        mBoard = CharArray(BOARD_SIZE) { OPEN_SPOT }
-        
-        // Only update non-empty cells
+        isMyTurn = game.currentTurn == currentPlayer
+        mySymbol = if (currentPlayer == game.player1) {
+            game.player1Symbol.first()
+        } else {
+            game.player2Symbol.first()
+        }
+        val opponentSymbol = if (mySymbol == 'X') 'O' else 'X'
+
         game.board.forEachIndexed { index, value ->
             mBoard[index] = when(value) {
-                game.player1Symbol -> HUMAN_PLAYER
-                game.player2Symbol -> COMPUTER_PLAYER
+                game.player1Symbol -> if (currentPlayer == game.player1) mySymbol else opponentSymbol
+                game.player2Symbol -> if (currentPlayer == game.player2) mySymbol else opponentSymbol
                 else -> OPEN_SPOT
             }
         }
-        
-        isMyTurn = game.currentTurn == currentPlayer
-        mySymbol = if (currentPlayer == game.player1) HUMAN_PLAYER else COMPUTER_PLAYER
         gameStateListener?.onGameStateChanged()
     }
 
@@ -72,15 +73,18 @@ class OnlineTicTacToeGame(
 
         currentGame?.let { game ->
             val symbol = if (currentPlayer == game.player1) game.player1Symbol else game.player2Symbol
-            val nextPlayer = if (currentPlayer == game.player1) game.player2 else game.player1
+            val nextPlayer = if (currentPlayer == game.player1) game.player2 ?: "" else game.player1
             
             val updates = mutableMapOf<String, Any>()
             updates["board/$location"] = symbol
-            updates["currentTurn"] = nextPlayer ?: ""
+            updates["currentTurn"] = nextPlayer
+
+            // Update local board immediately with your symbol
+            mBoard[location] = mySymbol
 
             gameRef.updateChildren(updates)
                 .addOnSuccessListener {
-                    mBoard[location] = player
+                    isMyTurn = false
                     gameStateListener?.onGameStateChanged()
                 }
         }
