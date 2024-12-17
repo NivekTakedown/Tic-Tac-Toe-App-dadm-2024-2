@@ -9,7 +9,7 @@ import xyz.ramos_lopez.tic_tac_toe_app.TicTacToeGame
 
 class OnlineTicTacToeGame(
     val gameId: String,
-    private val currentPlayer: String,
+    val currentPlayer: String,
     private val database: FirebaseDatabase
 ) : GameLogic {
     companion object {
@@ -24,6 +24,7 @@ class OnlineTicTacToeGame(
     private var mySymbol: Char = OPEN_SPOT
     private var gameStateListener: GameStateListener? = null
     private var currentGame: OnlineGame? = null
+    private var hostPlayer: String = currentPlayer
 
     init {
         gameRef.addValueEventListener(object : ValueEventListener {
@@ -31,6 +32,7 @@ class OnlineTicTacToeGame(
                 val game = snapshot.getValue(OnlineGame::class.java)
                 game?.let { 
                     currentGame = it
+                    hostPlayer = it.player1
                     updateGameState(it)
                 }
             }
@@ -41,10 +43,12 @@ class OnlineTicTacToeGame(
         })
     }
 
-
+    fun getHostPlayer(): String = hostPlayer
     fun setGameStateListener(listener: GameStateListener) {
         gameStateListener = listener
     }
+
+    fun getCurrentGame(): OnlineGame? = currentGame
 
     private fun updateGameState(game: OnlineGame) {
         isMyTurn = game.currentTurn == currentPlayer
@@ -161,12 +165,16 @@ class OnlineTicTacToeGame(
 
     private fun updateGameStatus(winner: Int) {
         val updates = when (winner) {
-            1 -> mapOf("status" to "finished", "winner" to "tie")
-            2 -> mapOf("status" to "finished", "winner" to currentPlayer)
-            3 -> {
-                val opponent = if (currentGame?.player1 == currentPlayer) currentGame?.player2 else currentGame?.player1
-                mapOf("status" to "finished", "winner" to opponent)
-            }
+            1 -> mapOf(
+                "status" to "finished",
+                "winner" to "tie",
+                "currentTurn" to ""  // Clear current turn
+            )
+            2, 3 -> mapOf(
+                "status" to "finished",
+                "winner" to currentPlayer,
+                "currentTurn" to ""  // Clear current turn
+            )
             else -> emptyMap()
         }
         gameRef.updateChildren(updates)
@@ -181,13 +189,20 @@ class OnlineTicTacToeGame(
 
     override fun getComputerMove(): Int = -1 // Not used in online game
     override fun restartGame() {
-        clearBoard()
+        // Reset local board
+        mBoard = CharArray(BOARD_SIZE) { OPEN_SPOT }
+        
+        // Reset game state in Firebase
         val updates = mapOf(
             "board" to List(BOARD_SIZE) { "" },
             "currentTurn" to currentGame?.player1,
             "status" to "active",
             "winner" to null
         )
+        
         gameRef.updateChildren(updates)
+            .addOnSuccessListener {
+                gameStateListener?.onGameStateChanged()
+            }
     }
 }

@@ -7,5 +7,6 @@ data class OnlineGame(
     var winner: String? = null,
     var status: String = "waiting", // waiting, active, finished
     var player1Symbol: String = "X",
-    var player2Symbol: String = "O"
+    var player2Symbol: String = "O",
+    var lastRestart: Long = System.currentTimeMillis() // Add this to track restarts
 )

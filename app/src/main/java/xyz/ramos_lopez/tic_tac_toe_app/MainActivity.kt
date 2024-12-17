@@ -224,6 +224,7 @@ class MainActivity : Activity(),GameStateListener {
     private lateinit var username: String
     private lateinit var usernameTextView: TextView
     private lateinit var onlineGameManager: OnlineGameManager
+    private var gameOverDialog: AlertDialog? = null
     
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -350,8 +351,21 @@ class MainActivity : Activity(),GameStateListener {
         if (winner != 0) {
             handleWinner(winner)
         } else {
-            val info = if ((game as OnlineTicTacToeGame).isMyTurn) "Tu turno" else "Turno del oponente"
-            infoTextView.text = info
+            if (game !is OnlineTicTacToeGame) return
+                val onlineGame = game as OnlineTicTacToeGame
+                val currentGame = onlineGame.getCurrentGame()
+                when (currentGame?.status) {
+                    "finished" -> {
+                        val winner = game.checkForWinner()
+                        handleWinner(winner)
+                        boardView.isEnabled = false
+                    }
+                    "active" -> {
+                        boardView.isEnabled = onlineGame.isMyTurn
+                        val info = if (onlineGame.isMyTurn) "Tu turno" else "Turno del oponente"
+                        infoTextView.text = info
+                    }
+                }
         }
     }
     private fun updateOnlineGameUI(onlineGame: OnlineGame) {
@@ -521,20 +535,42 @@ class MainActivity : Activity(),GameStateListener {
     }
 
     private fun handleWinner(winner: Int) {
+        // Return if dialog already exists
+        if (gameOverDialog?.isShowing == true) return
+
         val message = when (winner) {
             1 -> "¡Empate!"
             2 -> "¡Has ganado!"
             3 -> "Has perdido."
-            else -> ""
+            else -> return
         }
-        AlertDialog.Builder(this)
+
+        val onlineGame = game as? OnlineTicTacToeGame
+        val isHost = onlineGame?.getHostPlayer() == onlineGame?.currentPlayer
+
+        val dialogBuilder = AlertDialog.Builder(this)
             .setTitle("Fin del juego")
             .setMessage(message)
-            .setPositiveButton("Reiniciar") { _, _ -> startNewGame() }
             .setNegativeButton("Salir") { _, _ -> finish() }
-            .show()
-    }
 
+        if (isHost) {
+            dialogBuilder.setPositiveButton("Reiniciar") { _, _ ->
+                onlineGame?.restartGame()
+            }
+        } else {
+            dialogBuilder.setPositiveButton("Esperar reinicio") { _, _ ->
+                // Do nothing, wait for host to restart
+            }
+        }
+
+        gameOverDialog = dialogBuilder.create().apply {
+            setCancelable(false)
+            setOnDismissListener {
+                gameOverDialog = null
+            }
+            show()
+        }
+    }
     private fun showEndGameDialog(message: String) {
         AlertDialog.Builder(this)
             .setTitle("Game Over")
@@ -553,6 +589,7 @@ class MainActivity : Activity(),GameStateListener {
     private fun startNewGame() {
         if (game is OnlineTicTacToeGame) {
             (game as OnlineTicTacToeGame).restartGame()
+            boardView.isEnabled = (game as OnlineTicTacToeGame).isMyTurn
         } else {
             game.clearBoard()
         }
