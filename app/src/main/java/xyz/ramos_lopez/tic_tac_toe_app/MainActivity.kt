@@ -5,12 +5,10 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.SharedPreferences
-import android.graphics.Color
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper  // Add this import
-import android.provider.Settings.Global.getString
 import android.view.*
 import android.widget.Switch
 import android.widget.TextView
@@ -108,7 +106,7 @@ class SoundManager(private val context: Activity) {
 class PreferencesManager(private val context: Activity) {
     private val prefs: SharedPreferences = context.getSharedPreferences("ttt_prefs", Activity.MODE_PRIVATE)
 
-    fun loadGameState(gameManager: GameManager, game: TicTacToeGame) {
+    fun loadGameState(gameManager: GameManager, game: GameLogic) {
         gameManager.humanScore = prefs.getInt("humanScore", 0)
         gameManager.computerScore = prefs.getInt("computerScore", 0)
         gameManager.tieScore = prefs.getInt("tieScore", 0)
@@ -117,7 +115,7 @@ class PreferencesManager(private val context: Activity) {
         ))
     }
 
-    fun saveGameState(gameManager: GameManager, game: TicTacToeGame) {
+    fun saveGameState(gameManager: GameManager, game: GameLogic) {
         prefs.edit().apply {
             putInt("humanScore", gameManager.humanScore)
             putInt("computerScore", gameManager.computerScore)
@@ -150,7 +148,7 @@ class PreferencesManager(private val context: Activity) {
 
 // DialogManager.kt
 class DialogManager(private val activity: MainActivity) {
-    fun createDialog(id: Int, game: TicTacToeGame): Dialog {
+    fun createDialog(id: Int, game: GameLogic): Dialog {
         val builder = AlertDialog.Builder(activity)
 
         return when (id) {
@@ -163,7 +161,7 @@ class DialogManager(private val activity: MainActivity) {
     }
 
 
-    private fun createDifficultyDialog(builder: AlertDialog.Builder, game: TicTacToeGame): Dialog {
+    private fun createDifficultyDialog(builder: AlertDialog.Builder, game: GameLogic): Dialog {
         builder.setTitle(R.string.difficulty_choose)
         val levels = arrayOf(
             activity.getString(R.string.difficulty_easy),
@@ -214,7 +212,7 @@ class MainActivity : Activity() {
         const val DIALOG_ABOUT_ID = 2
     }
 
-    private lateinit var game: TicTacToeGame
+    private lateinit var game: GameLogic
     private lateinit var gameManager: GameManager
     private lateinit var soundManager: SoundManager
     private lateinit var preferencesManager: PreferencesManager
@@ -228,20 +226,19 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.main)
-
-        initializeComponents()
-        setupViews()
-
+        // Remove initial game initialization
+        // game = TicTacToeGame()
+        soundManager = SoundManager(this)
         if (savedInstanceState == null) {
-            startNewGame()
+            showGameModeDialog()
         } else {
+            game = TicTacToeGame()
+            initializeComponents()
+            setupViews()
             restoreGameState(savedInstanceState)
         }
-
-        setupBoardView()
-        updateScoreboard()
-        showGameModeDialog()
     }
     private fun showGameModeDialog() {
         val options = arrayOf(
@@ -261,21 +258,35 @@ class MainActivity : Activity() {
             .show()
     }
     private fun startOnlineGame() {
-        // Lógica para iniciar el juego en línea
+        //no implementation yet print
+        Toast.makeText(this, "Online game not implemented yet", Toast.LENGTH_SHORT).show()
+
     }
 
     private fun startComputerGame() {
-        // Lógica para iniciar el juego contra la máquina
+        game = TicTacToeGame()
+        initializeComponents()
+        setupViews() // Initialize views before restoring state
+        restorePreviousState()  // New method to load previous state
+    }
+
+    private fun restorePreviousState() {
+        preferencesManager.loadGameState(gameManager, game)
+        boardView.setGame(game)
+        boardView.invalidate()
+        updateScoreboard()
+        if (gameManager.isComputerTurn) {
+            handleComputerTurn()
+        }
     }
 
     private fun initializeComponents() {
         mHandler = Handler(Looper.getMainLooper())
-        game = TicTacToeGame()
         gameManager = GameManager(game)
-        soundManager = SoundManager(this)
         preferencesManager = PreferencesManager(this)
         dialogManager = DialogManager(this)
 
+        // Removed redundant soundManager initialization
         preferencesManager.loadGameState(gameManager, game)
         soundManager.isSoundEnabled = preferencesManager.loadSoundPreference()
     }
@@ -298,6 +309,7 @@ class MainActivity : Activity() {
         } else {
             updateUsernameDisplay()
         }
+        setupBoardView() 
     }
 
     private fun promptForUsername() {

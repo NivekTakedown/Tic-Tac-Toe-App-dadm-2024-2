@@ -19,7 +19,7 @@ class BoardView : View {
     private lateinit var mPaint: Paint
 
     // Referencia al juego
-    private lateinit var mGame: TicTacToeGame
+    private lateinit var mGame: GameLogic
 
     // Listener para movimientos
     private var mMoveListener: MoveListener? = null
@@ -46,7 +46,7 @@ class BoardView : View {
         mPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     }
 
-    fun setGame(game: TicTacToeGame) {
+    fun setGame(game: GameLogic) {
         mGame = game
     }
 
