@@ -1,4 +1,5 @@
 package xyz.ramos_lopez.tic_tac_toe_app
+
 import GameStateListener
 import OnlineGame
 import OnlineTicTacToeGame
@@ -11,15 +12,13 @@ import android.content.SharedPreferences
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
-import android.os.Looper  // Add this import
+import android.os.Looper
 import android.view.*
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.preference.PreferenceManager
 import com.google.firebase.database.FirebaseDatabase
-
-
 // GameManager.kt
 class GameManager(private val game: GameLogic) {
     var isComputerTurn = false
@@ -203,9 +202,7 @@ class DialogManager(private val activity: MainActivity) {
             .create()
     }
 }
-
-// MainActivity.kt
-class MainActivity : Activity(),GameStateListener {
+class MainActivity : Activity(), GameStateListener {
     companion object {
         const val DIALOG_DIFFICULTY_ID = 0
         const val DIALOG_QUIT_ID = 1
@@ -225,12 +222,11 @@ class MainActivity : Activity(),GameStateListener {
     private lateinit var usernameTextView: TextView
     private lateinit var onlineGameManager: OnlineGameManager
     private var gameOverDialog: AlertDialog? = null
-    
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main)
-        
+
         // Initialize managers first
         soundManager = SoundManager(this)
         preferencesManager = PreferencesManager(this)
@@ -238,7 +234,7 @@ class MainActivity : Activity(),GameStateListener {
 
         // Load username early
         username = preferencesManager.loadUsername() ?: ""
-        
+
         if (savedInstanceState == null) {
             showGameModeDialog()
         } else {
@@ -248,6 +244,7 @@ class MainActivity : Activity(),GameStateListener {
             restoreGameState(savedInstanceState)
         }
     }
+
     private fun showWaitingDialog(gameId: String) {
         val dialog = AlertDialog.Builder(this)
             .setTitle("Waiting for opponent")
@@ -267,6 +264,7 @@ class MainActivity : Activity(),GameStateListener {
 
         dialog.show()
     }
+
     private fun showGameModeDialog() {
         val options = arrayOf(
             getString(R.string.play_online),
@@ -277,23 +275,24 @@ class MainActivity : Activity(),GameStateListener {
             .setTitle(getString(R.string.select_game_mode))
             .setItems(options) { _, which ->
                 when (which) {
-                    0 -> showOnlineGameDialog() // Changed from startOnlineGame()
+                    0 -> showOnlineGameDialog()
                     1 -> startComputerGame()
                 }
             }
             .setCancelable(false)
             .show()
     }
+
     private fun showOnlineGameDialog() {
         if (!::username.isInitialized || username.isEmpty()) {
             promptForUsername {
-                // Show online game options after username is set
                 showOnlineGameOptions()
             }
         } else {
             showOnlineGameOptions()
         }
     }
+
     private fun showOnlineGameOptions() {
         val options = arrayOf("Create Game", "Join Game")
         AlertDialog.Builder(this)
@@ -345,6 +344,7 @@ class MainActivity : Activity(),GameStateListener {
         initializeComponents()
         setupViews()
     }
+
     override fun onGameStateChanged() {
         boardView.invalidate()
         val winner = game.checkForWinner()
@@ -352,35 +352,35 @@ class MainActivity : Activity(),GameStateListener {
             handleWinner(winner)
         } else {
             if (game !is OnlineTicTacToeGame) return
-                val onlineGame = game as OnlineTicTacToeGame
-                val currentGame = onlineGame.getCurrentGame()
-                when (currentGame?.status) {
-                    "finished" -> {
-                        val winner = game.checkForWinner()
-                        handleWinner(winner)
-                        boardView.isEnabled = false
-                    }
-                    "active" -> {
-                        boardView.isEnabled = onlineGame.isMyTurn
-                        val info = if (onlineGame.isMyTurn) "Tu turno" else "Turno del oponente"
-                        infoTextView.text = info
-                    }
+            val onlineGame = game as OnlineTicTacToeGame
+            val currentGame = onlineGame.getCurrentGame()
+            when (currentGame?.status) {
+                "finished" -> {
+                    val winner = game.checkForWinner()
+                    handleWinner(winner)
+                    boardView.isEnabled = false
                 }
+                "active" -> {
+                    boardView.isEnabled = onlineGame.isMyTurn
+                    val info = if (onlineGame.isMyTurn) "Tu turno" else "Turno del oponente"
+                    infoTextView.text = info
+                }
+            }
         }
     }
+
     private fun updateOnlineGameUI(onlineGame: OnlineGame) {
         val isPlayer1 = username == onlineGame.player1
         val mySymbol = if (isPlayer1) onlineGame.player1Symbol else onlineGame.player2Symbol
         val opponentName = if (isPlayer1) onlineGame.player2 else onlineGame.player1
-        
+
         infoTextView.text = when {
             onlineGame.currentTurn == username -> "Your turn ($mySymbol)"
             else -> "$opponentName's turn (${if (isPlayer1) onlineGame.player2Symbol else onlineGame.player1Symbol})"
         }
-        
+
         boardView.isEnabled = onlineGame.currentTurn == username
-        
-        // Only update non-empty cells
+
         onlineGame.board.forEachIndexed { index, symbol ->
             if (symbol.isNotEmpty()) {
                 game.setMove(
@@ -393,15 +393,15 @@ class MainActivity : Activity(),GameStateListener {
                 )
             }
         }
-        
+
         boardView.invalidate()
     }
 
     private fun startComputerGame() {
         game = TicTacToeGame()
         initializeComponents()
-        setupViews() // Initialize views before restoring state
-        restorePreviousState()  // New method to load previous state
+        setupViews()
+        restorePreviousState()
     }
 
     private fun restorePreviousState() {
@@ -417,7 +417,6 @@ class MainActivity : Activity(),GameStateListener {
     private fun initializeComponents() {
         mHandler = Handler(Looper.getMainLooper())
         gameManager = GameManager(game)
-        preferencesManager = PreferencesManager(this)
         dialogManager = DialogManager(this)
 
         // Load preferences
@@ -443,7 +442,7 @@ class MainActivity : Activity(),GameStateListener {
         } else {
             updateUsernameDisplay()
         }
-        setupBoardView() 
+        setupBoardView()
     }
 
     private fun promptForUsername(onComplete: () -> Unit = {}) {
@@ -481,10 +480,8 @@ class MainActivity : Activity(),GameStateListener {
         boardView.setMoveListener(object : BoardView.MoveListener {
             override fun onMoveMade() {
                 if (game is OnlineTicTacToeGame) {
-                    // Online game move
                     soundManager.playHumanSound()
                 } else {
-                    // Computer game move
                     handleHumanMove()
                 }
             }
@@ -535,7 +532,6 @@ class MainActivity : Activity(),GameStateListener {
     }
 
     private fun handleWinner(winner: Int) {
-        // Return if dialog already exists
         if (gameOverDialog?.isShowing == true) return
 
         val message = when (winner) {
@@ -545,39 +541,42 @@ class MainActivity : Activity(),GameStateListener {
             else -> return
         }
 
-        val onlineGame = game as? OnlineTicTacToeGame
-        val isHost = onlineGame?.getHostPlayer() == onlineGame?.currentPlayer
+        if (game is OnlineTicTacToeGame) {
+            val onlineGame = game as OnlineTicTacToeGame
+            val isHost = onlineGame.getHostPlayer() == onlineGame.currentPlayer
 
-        val dialogBuilder = AlertDialog.Builder(this)
-            .setTitle("Fin del juego")
-            .setMessage(message)
-            .setNegativeButton("Salir") { _, _ -> finish() }
+            val dialogBuilder = AlertDialog.Builder(this)
+                .setTitle("Fin del juego")
+                .setMessage(message)
+                .setNegativeButton("Salir") { _, _ -> finish() }
 
-        if (isHost) {
-            dialogBuilder.setPositiveButton("Reiniciar") { _, _ ->
-                onlineGame?.restartGame()
+            if (isHost) {
+                dialogBuilder.setPositiveButton("Reiniciar") { _, _ ->
+                    onlineGame.restartGame()
+                }
+            } else {
+                dialogBuilder.setPositiveButton("Esperar reinicio") { _, _ -> }
+            }
+
+            gameOverDialog = dialogBuilder.create().apply {
+                setCancelable(false)
+                setOnDismissListener {
+                    gameOverDialog = null
+                }
+                show()
             }
         } else {
-            dialogBuilder.setPositiveButton("Esperar reinicio") { _, _ ->
-                // Do nothing, wait for host to restart
-            }
-        }
+            // Update scores for computer game
+            gameManager.updateScores(winner)
+            updateScoreboard()
 
-        gameOverDialog = dialogBuilder.create().apply {
-            setCancelable(false)
-            setOnDismissListener {
-                gameOverDialog = null
-            }
-            show()
+            AlertDialog.Builder(this)
+                .setTitle("Game Over")
+                .setMessage(message)
+                .setPositiveButton("Restart") { _, _ -> startNewGame() }
+                .setNegativeButton("Quit") { _, _ -> finish() }
+                .show()
         }
-    }
-    private fun showEndGameDialog(message: String) {
-        AlertDialog.Builder(this)
-            .setTitle("Game Over")
-            .setMessage(message)
-            .setPositiveButton("Restart") { _, _ -> startNewGame() }
-            .setNegativeButton("Quit") { _, _ -> finish() }
-            .show()
     }
 
     private fun updateScoreboard() {
@@ -592,13 +591,14 @@ class MainActivity : Activity(),GameStateListener {
             boardView.isEnabled = (game as OnlineTicTacToeGame).isMyTurn
         } else {
             game.clearBoard()
+            gameManager.isComputerTurn = false
+            boardView.isEnabled = true
         }
-        gameManager.isComputerTurn = false
-        boardView.isEnabled = true
         boardView.invalidate()
         infoTextView.text = getString(R.string.first_human)
         updateScoreboard()
     }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.options_menu, menu)
         return true
